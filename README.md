@@ -1,4 +1,4 @@
-# Rinha de Backen (em Django 4.2)
+# Rinha de Backend (em Django 4.2)
 
 Ainda em construção, mas garanto que está sendo feito na força do ódio e com muita preguiça.
 
