@@ -23,6 +23,7 @@ class Pessoa(models.Model):
         blank=True,
         default=list,
     )
+
     # create extension btree_gin;
     # create index search_field_gin_idx on pessoas_pessoa using gin (search_field);
     # create index search_field_gin_idx on pessoas_pessoa using gin (to_tsvector('portuguese', search_field));
@@ -31,6 +32,7 @@ class Pessoa(models.Model):
     # https://docs.djangoproject.com/en/4.2/ref/contrib/postgres/search/#searchquery
     # https://www.postgresql.org/docs/current/textsearch-controls.html
     # https://docs.djangoproject.com/en/4.2/ref/migration-operations/#separatedatabaseandstate
+    # https://docs.djangoproject.com/en/4.2/ref/contrib/postgres/search/#postgresql-fts-search-configuration
     # https://stackoverflow.com/a/62420255
 
     # search_field = models.TextField("Campo de Busca", blank=True, null=False, default="")
@@ -80,14 +82,30 @@ class Pessoa(models.Model):
             .annotate(nascimento=Cast('nascimento', models.CharField()))
 
     @classmethod
-    def search_terms(cls, *terms):
-        return cls.objects \
-            .filter(
-                search_field=reduce(
-                    operator.and_,
-                    map(lambda t: SearchQuery(t, search_type="raw"), terms)
-                )
+    def search_terms(cls, *terms, as_dict=False):
+        def to_tsquery(*trms):
+            return " & ".join(trms)
+
+        def to_search_queries(tsquery):
+            configs = ["english", "portuguese"]
+            return map(lambda c: SearchQuery(tsquery, search_type="raw", config=c), configs)
+
+        tsquery = to_tsquery(*terms)
+        search_queries = to_search_queries(tsquery)
+        queryset = cls.objects.filter(
+            reduce(
+                operator.or_,
+                map(lambda sq: models.Q(search_field=sq), search_queries)
             )
+        )
+
+        if as_dict:
+            return queryset.values(
+                'apelido',
+                'nome',
+                'stack'
+            ).annotate(nascimento=Cast('nascimento', models.CharField()))
+        return queryset
 
     @classmethod
     def get_as_dict(cls, **kwargs):

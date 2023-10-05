@@ -29,7 +29,8 @@ class PessoaView(View):
         )
 
     def _filter(self, request):
-        pessoas_dict = Pessoa.filter_as_dict()
+        term = request.GET['t'].split(" ")
+        pessoas_dict = Pessoa.search_terms(*term, as_dict=True)
         pessoas_json = json.dumps(list(pessoas_dict))
         return HttpResponse(
             content=pessoas_json.encode("utf-8"),
