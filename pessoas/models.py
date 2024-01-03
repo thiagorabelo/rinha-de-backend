@@ -78,8 +78,8 @@ class Pessoa(models.Model):
     def filter_as_dict(cls, **kwargs):
         return cls.objects \
             .filter(**kwargs) \
-            .values('apelido', 'nome', 'stack') \
-            .annotate(nascimento=Cast('nascimento', models.CharField()))
+            .values("apelido", "nome", "stack") \
+            .annotate(nascimento=Cast("nascimento", models.CharField()), id=Cast("id", models.CharField()))
 
     @classmethod
     def search_terms(cls, *terms, as_dict=False):

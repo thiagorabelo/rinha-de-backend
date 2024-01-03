@@ -1,0 +1,21 @@
+meta {
+  name: Pessoa - POST
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://{{base_url}}/pessoas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "apelido": "thiago",
+    "nome": "Thiago Rabelo",
+    "nascimento": "1983-11-05",
+    "stack": ["Python", "JavaScript", "Java", "Docker", "C/C++", "Go"]
+  }
+  
+}
