@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='Id')),
                 ('apelido', models.CharField(max_length=32, unique=True, verbose_name='Apelido')),
-                ('nome', models.CharField(max_length=100, verbose_name='Nome')),
+                ('nome', models.CharField(max_length=512, verbose_name='Nome')),
                 ('nascimento', models.DateField(verbose_name='Data de Nascimento')),
                 ('stack', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=32), blank=True, default=list, null=True, size=None, verbose_name='Stack')),
             ],
