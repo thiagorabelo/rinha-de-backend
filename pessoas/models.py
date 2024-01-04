@@ -89,8 +89,7 @@ class Pessoa(models.Model):
         def to_tsquery(*trms):
             return " & ".join(trms)
 
-        def to_search_queries(tsquery):
-            configs = ["english", "portuguese"]
+        def to_search_queries(tsquery, configs=("english", "portuguese")):
             return map(lambda c: SearchQuery(tsquery, search_type="raw", config=c), configs)
 
         tsquery = to_tsquery(*terms)

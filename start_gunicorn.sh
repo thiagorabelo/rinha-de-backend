@@ -8,5 +8,5 @@ exec gunicorn \
     --bind "0.0.0.0:8000" \
     --workers "${WORKERS}" \
     --threads 2 \
-    --log-level info \
+    --log-level error \
     --log-file -

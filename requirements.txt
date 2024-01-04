@@ -3,7 +3,7 @@ asttokens==2.4.0
 backcall==0.2.0
 decorator==5.1.1
 Django==4.2.5
-executing==2.0.0
+executing==2.0.1
 factory-boy==3.3.0
 Faker==19.6.2
 ipython==8.16.1
@@ -13,7 +13,7 @@ parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
 prompt-toolkit==3.0.39
-psycopg2==2.9.7
+psycopg2-binary==2.9.9
 ptyprocess==0.7.0
 pure-eval==0.2.2
 Pygments==2.16.1

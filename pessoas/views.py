@@ -53,16 +53,16 @@ class PessoaView(ParseJSONMixin, View):
         return JsonResponse(data=pessoa_dict)
 
     def _filter(self, request):
-        term = request.GET['t'].split(" ")
-        pessoas_dict = Pessoa.search_terms(*term, as_dict=True)
-        return JsonResponse(data=list(pessoas_dict), safe=False)
+        if t := request.GET.get('t'):
+            term = t.split()
+            pessoas_dict = Pessoa.search_terms(*term, as_dict=True)
+            return JsonResponse(data=list(pessoas_dict), safe=False)
+        return JsonResponseBadRequest(data={"message": """Busca inválida (Informe o termo de busca "t")"""})
 
     def get(self, request: HttpRequest, pessoa_pk=0):
         if pessoa_pk:
             return self._get_one(request, pessoa_pk)
-        elif 't' in request.GET and request.GET['t']:
-            return self._filter(request)
-        return JsonResponseBadRequest(data={"message": """Busca inválida (Informe o termo de busca "t")"""})
+        return self._filter(request)
 
     def post(self, request: HttpRequest):
         try:
