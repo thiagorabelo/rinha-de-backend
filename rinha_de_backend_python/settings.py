@@ -58,7 +58,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-if bool(int(os.getenv("CPROFILE_MIDDLEWARE", "0"))):
+if bool(int(os.getenv("CPROFILE_MIDDLEWARE", "0"))) and DEBUG:
     MIDDLEWARE += ['django_cprofile_middleware.middleware.ProfilerMiddleware',]
     DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
 

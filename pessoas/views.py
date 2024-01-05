@@ -2,6 +2,8 @@ import codecs
 import json
 import types
 
+from asgiref.sync import sync_to_async
+
 from django.conf import settings
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -43,32 +45,35 @@ class ParseJSONMixin:
         request.json = types.MethodType(_json, request)
 
 
-
 # https://docs.djangoproject.com/en/4.2/topics/async/
 @method_decorator(csrf_exempt, name='dispatch')
 class PessoaView(ParseJSONMixin, View):
 
-    def _get_one(self, request, pk):
-        pessoa_dict = Pessoa.get_as_dict(pk=pk)
+    async def _get_one(self, request, pk):
+        pessoa_dict = await Pessoa.aget_as_dict(pk=pk)
         return JsonResponse(data=pessoa_dict)
 
-    def _filter(self, request):
+    async def _filter(self, request):
         if t := request.GET.get('t'):
-            term = t.split()
-            pessoas_dict = Pessoa.search_terms(*term, as_dict=True)
-            return JsonResponse(data=list(pessoas_dict), safe=False)
-        return JsonResponseBadRequest(data={"message": """Busca inválida (Informe o termo de busca "t")"""})
+            terms = t.split()
+            return JsonResponse(
+                data=await Pessoa.asearch_terms_as_list(*terms, as_dict=True),
+                safe=False
+            )
+        return JsonResponseBadRequest(
+            data={"message": """Busca inválida (Informe o termo de busca "t")"""}
+        )
 
-    def get(self, request: HttpRequest, pessoa_pk=0):
+    async def get(self, request: HttpRequest, pessoa_pk=0):
         if pessoa_pk:
-            return self._get_one(request, pessoa_pk)
-        return self._filter(request)
+            return await self._get_one(request, pessoa_pk)
+        return await self._filter(request)
 
-    def post(self, request: HttpRequest):
+    async def post(self, request: HttpRequest):
         try:
             form = PessoaForm(data=request.json())
             if form.is_valid():
-                pessoa = form.save()
+                pessoa = await sync_to_async(form.save)()
                 return JsonResponse(
                     data={"message": "criado"},
                     headers={"Location": pessoa.get_absolute_url()},
