@@ -1,4 +1,4 @@
 .venv
 profiles
-db/data
+compose/db/data
 *.pyc
