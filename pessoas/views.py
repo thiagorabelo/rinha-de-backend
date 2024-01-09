@@ -58,6 +58,7 @@ class PessoaView(ParseJSONMixin, View):
             terms = t.split()
             return JsonResponse(
                 data=await Pessoa.asearch_terms_as_list(*terms, as_dict=True),
+                headers={"My-Host-Name": settings.MY_HOST_NAME},
                 safe=False
             )
         return JsonResponseBadRequest(

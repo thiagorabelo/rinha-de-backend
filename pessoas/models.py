@@ -90,17 +90,9 @@ class Pessoa(models.Model):
         def to_tsquery(*trms):
             return " & ".join(trms)
 
-        def to_search_queries(tsquery, configs=("english", "portuguese")):
-            return map(lambda c: SearchQuery(tsquery, search_type="raw", config=c), configs)
-
         tsquery = to_tsquery(*terms)
-        search_queries = to_search_queries(tsquery)
-        queryset = cls.objects.filter(
-            reduce(
-                operator.or_,
-                map(lambda sq: models.Q(search_field=sq), search_queries)
-            )
-        )
+        search_query = SearchQuery(tsquery, search_type="raw")  # to_search_queries(tsquery)
+        queryset = cls.objects.filter(models.Q(search_field=search_query))
 
         if as_dict:
             return queryset.values(
@@ -111,9 +103,15 @@ class Pessoa(models.Model):
         return queryset
 
     @classmethod
-    async def asearch_terms_as_list(cls, *terms, as_dict=False):
+    async def asearch_terms_as_list(cls, *terms, limit=None, as_dict=False):
+        def get_queryset():
+            queryset = cls.search_terms(*terms, as_dict=as_dict)
+            if limit:
+                queryset = queryset[:limit]
+            return queryset
+
         return await sync_to_async(
-            lambda: list(cls.search_terms(*terms, as_dict=as_dict))
+            lambda: list(get_queryset())
         )()
 
     @classmethod

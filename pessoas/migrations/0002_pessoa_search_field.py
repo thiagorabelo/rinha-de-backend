@@ -17,12 +17,9 @@ class Migration(migrations.Migration):
                 migrations.RunSQL(
                     sql="""
                     ALTER TABLE pessoas_pessoa ADD COLUMN search_field tsvector GENERATED ALWAYS AS (
-                        setweight(to_tsvector('english', coalesce(apelido, '')), 'A') ||
-                        setweight(to_tsvector('portuguese', coalesce(apelido, '')), 'B') ||
-                        setweight(to_tsvector('english', coalesce(nome, '')), 'A') ||
-                        setweight(to_tsvector('portuguese', coalesce(nome, '')), 'B') ||
-                        setweight(to_tsvector('english', array_to_tsvector(array_remove(stack, null))::text), 'C')
-                        /* setweight(array_to_tsvector(array_remove(stack, null)), 'C') */
+                        to_tsvector('english', coalesce(apelido, ''))
+                        || to_tsvector('english', coalesce(nome, ''))
+                        || to_tsvector('english', array_to_tsvector(array_remove(stack, null))::text)
                     ) STORED;
                     """,
                     reverse_sql="ALTER TABLE pessoas_pessoa DROP COLUMN search_field ;"

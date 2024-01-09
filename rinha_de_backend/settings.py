@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import socket
 
 from pathlib import Path
 from dotenv import load_dotenv
@@ -142,3 +143,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 APPEND_SLASH = False
+
+try:
+    MY_HOST_NAME = socket.gethostname()
+except Exception as ex:
+    MY_HOST_NAME = 'Unknow'

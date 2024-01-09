@@ -16,3 +16,5 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://www.uvicorn.org/deployment/>
 - <https://medium.com/@bruno.fosados/django-async-class-based-views-acbv-5986c4511ae6>
 - <https://www.slingacademy.com/article/python-using-the-result-returned-by-an-async-function/>
+- <https://dba.stackexchange.com/a/299047>
+- <https://copyprogramming.com/howto/postgres-full-text-search-on-array-column-with-index>

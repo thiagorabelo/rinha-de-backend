@@ -6,12 +6,15 @@ RUN addgroup galo && adduser -S -G galo -g "App Runner" galo \
     && mkdir -p /app \
     && chown galo:galo -R /app
 
+COPY requirements.txt ./
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+
 COPY --chown=galo:galo . /app
 
 WORKDIR /app
 
-RUN pip install -r requirements.txt
-
 USER galo
 
-CMD ./manage.py migrate && /app/start_uvicorn.sh
+CMD /app/start_uvicorn.sh
