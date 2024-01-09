@@ -6,7 +6,7 @@ PORT="${PORT:-8000}"
 LOG_LEVEL="${LOG_LEVEL:-error}"
 
 exec gunicorn \
-    "rinha_de_backend_python.asgi:application" \
+    "rinha_de_backend.asgi:application" \
     --worker-class "uvicorn.workers.UvicornWorker" \
     --name "Rinha de Backend - Python" \
     --bind "0.0.0.0:${PORT}" \

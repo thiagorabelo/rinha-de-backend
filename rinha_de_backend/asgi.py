@@ -1,5 +1,5 @@
 """
-ASGI config for rinha_de_backend_python project.
+ASGI config for rinha_de_backend project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'rinha_de_backend_python.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'rinha_de_backend.settings')
 
 application = get_asgi_application()

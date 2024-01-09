@@ -6,7 +6,7 @@ PORT="${PORT:-8000}"
 LOG_LEVEL="${LOG_LEVEL:-error}"
 
 exec gunicorn \
-    "rinha_de_backend_python.wsgi:application" \
+    "rinha_de_backend.wsgi:application" \
     --name "Rinha de Backend - Python" \
     --bind "0.0.0.0:${PORT}" \
     --workers "${WORKERS}" \
