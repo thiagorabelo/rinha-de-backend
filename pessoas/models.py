@@ -91,7 +91,7 @@ class Pessoa(models.Model):
             return " & ".join(trms)
 
         tsquery = to_tsquery(*terms)
-        search_query = SearchQuery(tsquery, search_type="raw")  # to_search_queries(tsquery)
+        search_query = SearchQuery(tsquery, search_type="raw")
         queryset = cls.objects.filter(models.Q(search_field=search_query))
 
         if as_dict:
@@ -101,18 +101,6 @@ class Pessoa(models.Model):
                 'stack'
             ).annotate(nascimento=Cast('nascimento', models.CharField()))
         return queryset
-
-    @classmethod
-    async def asearch_terms_as_list(cls, *terms, limit=None, as_dict=False):
-        def get_queryset():
-            queryset = cls.search_terms(*terms, as_dict=as_dict)
-            if limit:
-                queryset = queryset[:limit]
-            return queryset
-
-        return await sync_to_async(
-            lambda: list(get_queryset())
-        )()
 
     @classmethod
     def get_as_dict(cls, **kwargs):
