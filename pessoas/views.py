@@ -5,6 +5,7 @@ import types
 from asgiref.sync import sync_to_async
 
 from django.conf import settings
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpRequest
@@ -18,6 +19,10 @@ from .forms import PessoaForm
 
 class JsonResponseBadRequest(JsonResponse):
     status_code = 400
+
+
+class JsonResponseNotFound(JsonResponse):
+    status_code = 404
 
 
 class JsonResponseUnprocessableEntity(JsonResponse):
@@ -46,12 +51,22 @@ class ParseJSONMixin:
 
 
 # https://docs.djangoproject.com/en/4.2/topics/async/
-@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(csrf_exempt, name="dispatch")
 class PessoaView(ParseJSONMixin, View):
 
     async def _get_one(self, request, pk):
-        pessoa_dict = await Pessoa.aget_as_dict(pk=pk)
-        return JsonResponse(data=pessoa_dict)
+        if pessoa := await cache.aget(f"pessoa:{pk}"):
+            return JsonResponse(data=pessoa)
+
+        try:
+            pessoa_dict = await Pessoa.aget_as_dict(pk=pk)
+
+            await cache.aset(f"pessoa:{pk}", pessoa_dict)
+            await cache.aset(f"pessoa:apelido:{pessoa_dict['apelido']}", "1")
+
+            return JsonResponse(data=pessoa_dict)
+        except Pessoa.DoesNotExist:
+            return JsonResponseNotFound(data={"message": "Pessoa não encontrada"})
 
     async def _filter(self, request):
         if t := request.GET.get('t'):
@@ -75,7 +90,16 @@ class PessoaView(ParseJSONMixin, View):
         try:
             form = PessoaForm(data=request.json())
             if form.is_valid():
+                pessoa = form.instance
+
+                if await cache.aget(f"pessoa:apelido:{pessoa.apelido}"):
+                    return JsonResponseUnprocessableEntity(data={"message": "unique violation"})
+
                 pessoa = await sync_to_async(form.save)()
+
+                await cache.aset(f"pessoa:{pessoa.id}", pessoa.to_dict())
+                await cache.aset(f"pessoa:apelido:{pessoa.apelido}", "1")
+
                 return JsonResponse(
                     data={"message": "criado"},
                     headers={"Location": pessoa.get_absolute_url()},
@@ -98,6 +122,6 @@ def contagem_pessoas(request):
     total = Pessoa.objects.all().count()
     return HttpResponse(
         content=f"{total}".encode("utf-8"),
-        content_type="text/json",
+        content_type="application/json",
         status=200
     )

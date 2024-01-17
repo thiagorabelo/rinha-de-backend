@@ -69,14 +69,16 @@ class Pessoa(models.Model):
     #     self.search_field = ",".join(itens)
     #     return super().save(*args, **kwargs)
 
-    def to_json(self):
-        json_dict = {
+    def to_dict(self):
+        return {
             "apelido": self.apelido,
             "nome": self.nome,
             "nascimento": self.nascimento.isoformat(),
             "stack": self.stack,
         }
-        return json.dumps(json_dict)
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
     @classmethod
     def filter_as_dict(cls, **kwargs):

@@ -3,3 +3,4 @@ profiles
 compose/db/data
 *.pyc
 pessoas.csv
+*.log

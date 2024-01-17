@@ -20,6 +20,7 @@ services:
 
   nginx:
     image: nginx:${NGINX_TAG}
+    hostname: nginx
     restart: always
     volumes:
       - ./compose/nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
@@ -41,7 +42,8 @@ services:
     restart: "no"
     env_file:
       - ./compose/app1/.env
-    command: ./manage.py migrate && exit 0
+    command: sh -c '( sleep 5 && ./manage.py migrate ) && exit 0'
+    deploy: {}
 
   app1:
     <<: *rinha-de-backend-default
@@ -61,8 +63,22 @@ services:
       - db
       - app0
 
+  redis:
+    image: redis:7.2.4-alpine
+    hostname: redis
+    command: redis-server --save "" --appendonly no --maxclients 20000
+    ports:
+      - 6379:6379
+    deploy:
+      resources:
+        limits:
+          cpus: '0.05'
+          memory: '0.4GB'
+
+
   db:
     image: postgres:${PG_TAG}
+    hostname: postgres
     restart: always
     volumes:
       - ./compose/db/init:/docker-entrypoint-initdb.d:rw
@@ -73,9 +89,9 @@ services:
     expose:
       - "5432"
     ports:
-      - "5432:5432"
+      - "5431:5432"
     deploy:
       resources:
         limits:
-          cpus: "0.75"
-          memory: "1.5GB"
+          cpus: "0.70"
+          memory: "1.3GB"
