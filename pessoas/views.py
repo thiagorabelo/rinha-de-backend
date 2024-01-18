@@ -1,9 +1,4 @@
-import codecs
-import json
-import types
-
 from asgiref.sync import sync_to_async
-
 from django.conf import settings
 from django.core.cache import cache
 from django.http import JsonResponse
@@ -13,41 +8,13 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Pessoa
 from .forms import PessoaForm
-
-
-class JsonResponseBadRequest(JsonResponse):
-    status_code = 400
-
-
-class JsonResponseNotFound(JsonResponse):
-    status_code = 404
-
-
-class JsonResponseUnprocessableEntity(JsonResponse):
-    status_code = 422
-
-
-class ParseJSONMixin:
-    """
-    Adiciona o método request.json() ao objeto request
-    """
-
-    def setup(self, request, *args, **kwargs):
-        super().setup(request, *args, **kwargs)
-
-        def _json(self):
-            if not hasattr(self, '_json_cache'):
-                if request.META.get('CONTENT_TYPE') == 'application/json':
-                    encoding = settings.DEFAULT_CHARSET
-                    stream = codecs.getreader(encoding)(self)
-                    self._json_cache = json.load(stream)
-                else:
-                    self._json_cache = None
-            return self._json_cache
-
-        request.json = types.MethodType(_json, request)
+from .http import JsonResponseBadRequest, JsonResponseNotFound, \
+                  JsonResponseUnprocessableEntity
+from .mixins import ParseJSONMixin
+from .models import Pessoa
+from .utils import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
+                   has_pessoa_apelido_cached
 
 
 # https://docs.djangoproject.com/en/4.2/topics/async/
@@ -55,15 +22,8 @@ class ParseJSONMixin:
 class PessoaView(ParseJSONMixin, View):
 
     async def _get_one(self, request, pk):
-        if pessoa := await cache.aget(f"pessoa:{pk}"):
-            return JsonResponse(data=pessoa)
-
         try:
-            pessoa_dict = await Pessoa.aget_as_dict(pk=pk)
-
-            await cache.aset(f"pessoa:{pk}", pessoa_dict)
-            await cache.aset(f"pessoa:apelido:{pessoa_dict['apelido']}", "1")
-
+            pessoa_dict = await get_pessoa_dict_by_cache_or_db(pk)
             return JsonResponse(data=pessoa_dict)
         except Pessoa.DoesNotExist:
             return JsonResponseNotFound(data={"message": "Pessoa não encontrada"})
@@ -92,13 +52,17 @@ class PessoaView(ParseJSONMixin, View):
             if form.is_valid():
                 pessoa = form.instance
 
-                if await cache.aget(f"pessoa:apelido:{pessoa.apelido}"):
+                if await has_pessoa_apelido_cached(pessoa):
                     return JsonResponseUnprocessableEntity(data={"message": "unique violation"})
 
-                pessoa = await sync_to_async(form.save)()
-
-                await cache.aset(f"pessoa:{pessoa.id}", pessoa.to_dict())
-                await cache.aset(f"pessoa:apelido:{pessoa.apelido}", "1")
+                try:
+                    pessoa = await form.asave()
+                except IntegrityError:
+                    return JsonResponseUnprocessableEntity(
+                        data={"message": "o apelido já existe"}
+                    )
+                finally:
+                    await set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
 
                 return JsonResponse(
                     data={"message": "criado"},
@@ -107,10 +71,6 @@ class PessoaView(ParseJSONMixin, View):
                 )
             return JsonResponseUnprocessableEntity(
                 data=form.errors
-            )
-        except IntegrityError:
-            return JsonResponseUnprocessableEntity(
-                data={"message": "o apelido já existe"}
             )
         except AttributeError as ex:
             return JsonResponseBadRequest(

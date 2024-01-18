@@ -5,10 +5,32 @@ x-rinha-de-backend-default: &rinha-de-backend-default
     args:
       - PYTHON_TAG=${PYTHON_TAG}
   restart: always
+  volumes:
+    - ./compose/socks:/tmp/socks:rw
+  environment:
+    WORKERS: "2"
+    # LOG_LEVEL: "debug"
+
+    SECRET_KEY: "j#d)x3j5-yw3&j!7wh@*c&fi1b9-j%t5w$=c=!m^ts_w$)l1l!"
+
+    DEBUG: "0"
+
+    DB_NAME: "rinha_de_backend"
+    DB_USER: "galo"
+    DB_PASSWORD: "cocorico"
+    DB_HOST: "postgres"
+    DB_PORT: 5432
+    # DB_CONN_MAX_AGE: 500
+
+    CACHE_LOCATION: "redis://redis:6379/0"
+
+    CPROFILE_MIDDLEWARE: "0"
+
   expose:
     - "8000"
   depends_on:
-    - db
+    - postgres
+    - redis
   deploy:
     resources:
       limits:
@@ -23,8 +45,8 @@ services:
     hostname: nginx
     restart: always
     volumes:
-      - ./compose/nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
       - ./compose/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./compose/socks:/tmp/socks:rw
     depends_on:
       - app1
       - app2
@@ -51,7 +73,7 @@ services:
     env_file:
       - ./compose/app1/.env
     depends_on:
-      - db
+      - postgres
       - app0
 
   app2:
@@ -60,7 +82,7 @@ services:
     env_file:
       - ./compose/app2/.env
     depends_on:
-      - db
+      - postgres
       - app0
 
   redis:
@@ -76,7 +98,7 @@ services:
           memory: '0.4GB'
 
 
-  db:
+  postgres:
     image: postgres:${PG_TAG}
     hostname: postgres
     restart: always
