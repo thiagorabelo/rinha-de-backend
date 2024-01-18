@@ -78,8 +78,8 @@ class PessoaView(ParseJSONMixin, View):
             )
 
 
-def contagem_pessoas(request):
-    total = Pessoa.objects.all().count()
+async def contagem_pessoas(request):
+    total = await Pessoa.objects.all().acount()
     return HttpResponse(
         content=f"{total}".encode("utf-8"),
         content_type="application/json",
