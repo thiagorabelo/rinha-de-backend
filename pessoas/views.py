@@ -1,6 +1,4 @@
-from asgiref.sync import sync_to_async
 from django.conf import settings
-from django.core.cache import cache
 from django.http import JsonResponse
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpRequest
@@ -24,7 +22,10 @@ class PessoaView(ParseJSONMixin, View):
     async def _get_one(self, request, pk):
         try:
             pessoa_dict = await get_pessoa_dict_by_cache_or_db(pk)
-            return JsonResponse(data=pessoa_dict)
+            return JsonResponse(
+                data=pessoa_dict,
+                headers={"My-Host-Name": settings.MY_HOST_NAME}
+            )
         except Pessoa.DoesNotExist:
             return JsonResponseNotFound(data={"message": "Pessoa não encontrada"})
 
@@ -53,28 +54,45 @@ class PessoaView(ParseJSONMixin, View):
                 pessoa = form.instance
 
                 if await has_pessoa_apelido_cached(pessoa):
-                    return JsonResponseUnprocessableEntity(data={"message": "unique violation"})
+                    return JsonResponseUnprocessableEntity(
+                        data={"message": "unique violation"},
+                        headers={
+                            "My-Host-Name": settings.MY_HOST_NAME
+                        }
+                    )
 
                 try:
                     pessoa = await form.asave()
                 except IntegrityError:
                     return JsonResponseUnprocessableEntity(
-                        data={"message": "o apelido já existe"}
+                        data={"message": "o apelido já existe"},
+                        headers={
+                            "My-Host-Name": settings.MY_HOST_NAME
+                        }
                     )
                 finally:
                     await set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
 
                 return JsonResponse(
                     data={"message": "criado"},
-                    headers={"Location": pessoa.get_absolute_url()},
+                    headers={
+                        "Location": pessoa.get_absolute_url(),
+                        "My-Host-Name": settings.MY_HOST_NAME
+                    },
                     status=201
                 )
             return JsonResponseUnprocessableEntity(
-                data=form.errors
+                data=form.errors,
+                headers={
+                    "My-Host-Name": settings.MY_HOST_NAME
+                }
             )
         except AttributeError as ex:
             return JsonResponseBadRequest(
-                data={"message": str(ex)}
+                data={"message": str(ex)},
+                headers={
+                    "My-Host-Name": settings.MY_HOST_NAME
+                }
             )
 
 
@@ -83,5 +101,6 @@ async def contagem_pessoas(request):
     return HttpResponse(
         content=f"{total}".encode("utf-8"),
         content_type="application/json",
+        headers={"My-Host-Name": settings.MY_HOST_NAME},
         status=200
     )
