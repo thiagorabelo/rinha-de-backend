@@ -15,8 +15,8 @@ x-rinha-de-backend-default: &rinha-de-backend-default
   deploy:
     resources:
       limits:
-        cpus: "0.25"
-        memory: "0.4GB"
+        cpus: "0.4"
+        memory: "0.5GB"
 
 
 x-app-environment-default: &app-environment-default
@@ -32,17 +32,16 @@ x-app-environment-default: &app-environment-default
   DB_PASSWORD: "cocorico"
   DB_HOST: "postgres"
   DB_PORT: 5432
-  # DB_CONN_MAX_AGE: 500
+  DB_CONN_MAX_AGE: 100
 
   CACHE_LOCATION: "redis://redis:6379/0"
-  CELERY_BROKER_REDIS_URL: "redis://redis:6379/1"
 
   CPROFILE_MIDDLEWARE: "0"
 
 
 services:
 
-  nginx:  # 0.4GB / 0.20
+  nginx:  # 0.5GB / 0.15
     image: nginx:${NGINX_TAG}
     hostname: nginx
     restart: always
@@ -57,8 +56,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.20"
-          memory: "0.4GB"
+          cpus: "0.15"
+          memory: "0.5GB"
 
   app0:
     <<: *rinha-de-backend-default
@@ -70,7 +69,7 @@ services:
     command: sh -c '( sleep 5 && ./manage.py migrate ) && exit 0'
     deploy: {}
 
-  app1:  # 0.4GB / 0.25
+  app1:  # 0.5GB / 0.4
     <<: *rinha-de-backend-default
     hostname: app1
     environment:
@@ -80,7 +79,7 @@ services:
       - postgres
       - app0
 
-  app2:  # 0.4GB / 0.25
+  app2:  # 0.5GB / 0.4
     <<: *rinha-de-backend-default
     hostname: app2
     environment:
@@ -90,18 +89,7 @@ services:
       - postgres
       - app0
 
-  celery: # 0.4GB / 0.25
-    <<: *rinha-de-backend-default
-    hostname: celery
-    environment:
-      <<: *app-environment-default
-      ALLOWED_HOSTS: "app1,app2,localhost,127.0.0.1,0.0.0.0"
-    command: celery -A rinha_de_backend worker -l info
-    depends_on:
-      - postgres
-      - app0
-
-  redis:  # 0.4GB / 0.05
+  redis:  # 0.5GB / 0.1
     image: redis:7.2.4-alpine
     hostname: redis
     command: redis-server --save "" --appendonly no --maxclients 20000
@@ -110,10 +98,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.05'
-          memory: '0.4GB'
+          cpus: '0.1'
+          memory: '0.5GB'
 
-  postgres:  # 1.0GB / 0.5
+  postgres:  # 1.0GB / 0.45
     image: postgres:${PG_TAG}
     hostname: postgres
     restart: always
@@ -130,5 +118,5 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.50"
+          cpus: "0.45"
           memory: "1.0GB"

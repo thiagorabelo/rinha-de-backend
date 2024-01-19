@@ -46,9 +46,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # 'django_celery_beat',
-    # 'django_celery_results',
-
     'pessoas',
 ]
 
@@ -98,14 +95,18 @@ DATABASES = {
         'PASSWORD': os.environ["DB_PASSWORD"],
         'HOST': os.environ["DB_HOST"],
         'PORT': os.getenv("DB_PORT", '5432'),
-        #  'CONN_MAX_AGE': not DEBUG and int(os.getenv("DB_CONN_MAX_AGE", "0")) or None
+        'CONN_MAX_AGE': not DEBUG and int(os.getenv("DB_CONN_MAX_AGE", "0")) or None
     }
 }
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        # "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": os.environ["CACHE_LOCATION"],
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
@@ -158,13 +159,3 @@ try:
     MY_HOST_NAME = socket.gethostname()
 except Exception as ex:
     MY_HOST_NAME = 'Unknow'
-
-
-# save Celery task results in Django's database
-# CELERY_RESULT_BACKEND = "django-db"
-
-# This configures Redis as the datastore between Django + Celery
-CELERY_BROKER_URL = os.environ["CELERY_BROKER_REDIS_URL"]
-
-# this allows you to schedule items in the Django admin.
-# CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
