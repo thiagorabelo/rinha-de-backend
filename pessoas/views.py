@@ -1,3 +1,4 @@
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -11,6 +12,7 @@ from .http import JsonResponseBadRequest, JsonResponseNotFound, \
                   JsonResponseUnprocessableEntity
 from .mixins import ParseJSONMixin
 from .models import Pessoa
+from .tasks import save_pessoa
 from .utils import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
 
@@ -62,7 +64,8 @@ class PessoaView(ParseJSONMixin, View):
                     )
 
                 try:
-                    pessoa = await form.asave()
+                    # pessoa = await form.asave()
+                    await sync_to_async(save_pessoa.delay)(pessoa.to_dict())
                 except IntegrityError:
                     return JsonResponseUnprocessableEntity(
                         data={"message": "o apelido já existe"},

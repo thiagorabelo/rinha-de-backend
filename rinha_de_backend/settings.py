@@ -46,6 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # 'django_celery_beat',
+    # 'django_celery_results',
+
     'pessoas',
 ]
 
@@ -155,3 +158,13 @@ try:
     MY_HOST_NAME = socket.gethostname()
 except Exception as ex:
     MY_HOST_NAME = 'Unknow'
+
+
+# save Celery task results in Django's database
+# CELERY_RESULT_BACKEND = "django-db"
+
+# This configures Redis as the datastore between Django + Celery
+CELERY_BROKER_URL = os.environ["CELERY_BROKER_REDIS_URL"]
+
+# this allows you to schedule items in the Django admin.
+# CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'

@@ -12,15 +12,23 @@ def _pessoa_apelido_key(apelido):
 
 
 async def get_pessoa_dict_by_cache_or_db(pk):
-    if pessoa := await cache.aget(_pessoa_id_key(pk)):
-        return pessoa
-    pessoa = await Pessoa.aget_as_dict(pk=pk)
-    await set_pessoa_dict_cache(pk, pessoa)
-    return pessoa
+    if pessoa_dict := await cache.aget(_pessoa_id_key(pk)):
+        return pessoa_dict
+    pessoa_dict = await Pessoa.aget_as_dict(pk=pk)
+    await set_pessoa_dict_cache(pk, pessoa_dict)
+    return pessoa_dict
 
 
 async def has_pessoa_apelido_cached(pessoa):
-    return await cache.ahas_key(_pessoa_apelido_key(pessoa.apelido))
+    if await cache.ahas_key(_pessoa_apelido_key(pessoa.apelido)):
+        return True
+    try:
+        pessoa = await Pessoa.objects.aget(apelido=pessoa.apelido)
+        pessoa_dict = pessoa.to_dict()
+        await set_pessoa_dict_cache(pessoa.pk, pessoa_dict)
+        return True
+    except Pessoa.DoesNotExist:
+        return False
 
 
 async def set_pessoa_dict_cache(pk, pessoa_dict):

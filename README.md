@@ -31,3 +31,7 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://plainenglish.io/blog/how-deploy-an-asgi-django-application-with-nginx-gunicorn-daphne-and-supervisor-on-ubuntu-server>
 
 - <https://geekflare.com/python-asynchronous-web-frameworks/>
+
+- <https://www.codingforentrepreneurs.com/blog/celery-redis-django/>
+- <https://saadali18.medium.com/setup-your-django-project-with-celery-celery-beat-and-redis-644dc8a2ac4b>
+- <https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html>
