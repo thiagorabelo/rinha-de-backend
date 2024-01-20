@@ -102,7 +102,14 @@ services:
           memory: '0.5GB'
 
   postgres:  # 1.0GB / 0.45
-    image: postgres:${PG_TAG}
+    # Tive que fazer build da própia imagem para poder
+    # adicionar a extensão "system_stats" no postgres
+    # com finalidade de objter estatísticas no pgAdmin4
+    image: thiagorts/postgres:${PG_TAG}
+    build:
+      context: ./compose/db/
+      args:
+        - PG_TAG=${PG_TAG}
     hostname: postgres
     restart: always
     volumes:
