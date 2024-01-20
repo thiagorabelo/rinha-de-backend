@@ -35,3 +35,9 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://www.codingforentrepreneurs.com/blog/celery-redis-django/>
 - <https://saadali18.medium.com/setup-your-django-project-with-celery-celery-beat-and-redis-644dc8a2ac4b>
 - <https://docs.celeryq.dev/en/stable/django/first-steps-with-django.html>
+
+- <https://docs.gunicorn.org/en/stable/design.html>
+- <https://stackoverflow.com/questions/38425620/gunicorn-workers-and-threads>
+- <https://docs.rhodecode.com/RhodeCode-Enterprise/admin/tuning-gunicorn.html>
+- <https://dev.to/lsena/gunicorn-worker-types-how-to-choose-the-right-one-4n2c>
+- <https://www.uvicorn.org/deployment/>
