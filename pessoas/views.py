@@ -2,22 +2,22 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpRequest
-from django.utils.decorators import method_decorator
+# from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from .forms import PessoaForm
 from .http import JsonResponseBadRequest, JsonResponseNotFound, \
                   JsonResponseUnprocessableEntity
-from .mixins import ParseJSONMixin
+from .utils import get_body_as_json
 from .models import Pessoa
-from .utils import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
+from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
 
 
 # https://docs.djangoproject.com/en/4.2/topics/async/
-@method_decorator(csrf_exempt, name="dispatch")
-class PessoaView(ParseJSONMixin, View):
+#@method_decorator(csrf_exempt, name="dispatch")
+class PessoaView(View):
 
     async def _get_one(self, request, pk):
         try:
@@ -49,7 +49,7 @@ class PessoaView(ParseJSONMixin, View):
 
     async def post(self, request: HttpRequest):
         try:
-            form = PessoaForm(data=request.json())
+            form = PessoaForm(data=get_body_as_json(request))
             if form.is_valid():
                 pessoa = form.instance
 

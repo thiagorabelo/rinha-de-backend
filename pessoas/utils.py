@@ -1,38 +1,19 @@
-from django.core.cache import cache
+import codecs
+import json
+import types
 
-from .models import Pessoa
-
-
-def _pessoa_id_key(id):
-    return f"pessoa:{id}"
+from django.conf import settings
 
 
-def _pessoa_apelido_key(apelido):
-    return f"pessoa:apelido:{apelido}"
-
-
-async def get_pessoa_dict_by_cache_or_db(pk):
-    if pessoa_dict := await cache.aget(_pessoa_id_key(pk)):
-        return pessoa_dict
-    pessoa_dict = await Pessoa.aget_as_dict(pk=pk)
-    await set_pessoa_dict_cache(pk, pessoa_dict)
-    return pessoa_dict
-
-
-async def has_pessoa_apelido_cached(pessoa):
-    if await cache.ahas_key(_pessoa_apelido_key(pessoa.apelido)):
-        return True
-    try:
-        pessoa = await Pessoa.objects.aget(apelido=pessoa.apelido)
-        pessoa_dict = pessoa.to_dict()
-        await set_pessoa_dict_cache(pessoa.pk, pessoa_dict)
-        return True
-    except Pessoa.DoesNotExist:
-        return False
-
-
-async def set_pessoa_dict_cache(pk, pessoa_dict):
-    return await cache.aset_many({
-        _pessoa_id_key(pk): pessoa_dict,
-        _pessoa_apelido_key(pessoa_dict["apelido"]): "1"
-    })
+def get_body_as_json(request):
+    """
+    Adiciona o método request.json() ao objeto request
+    """
+    if not hasattr(request, '_json_cache'):
+        if request.META.get('CONTENT_TYPE') == 'application/json':
+            encoding = settings.DEFAULT_CHARSET
+            stream = codecs.getreader(encoding)(request)
+            request._json_cache = json.load(stream)
+        else:
+            request._json_cache = None
+    return request._json_cache

@@ -1,0 +1,20 @@
+meta {
+  name: Pessoa - Create 3
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://{{base_url}}/pessoas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "apelido": "nic",
+    "nome": "Nicolas Ricardo Manoel Melo",
+    "nascimento": "1987-05-29",
+    "stack": ["C#", "NoSQL", "C#", "Ruby", "R", "Kotlin", "Python", "C", "Swift"]
+  }
+}
