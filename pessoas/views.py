@@ -1,3 +1,5 @@
+import asyncio
+
 from django.conf import settings
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -9,10 +11,13 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import PessoaForm
 from .http import JsonResponseBadRequest, JsonResponseNotFound, \
                   JsonResponseUnprocessableEntity
-from .utils import get_body_as_json
+from .utils import get_body_as_json, insert_queue, init_pessoa_inserter_loop
 from .models import Pessoa
 from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
+
+
+init_pessoa_inserter_loop(asyncio.get_event_loop())
 
 
 # https://docs.djangoproject.com/en/4.2/topics/async/
@@ -62,7 +67,8 @@ class PessoaView(View):
                     )
 
                 try:
-                    pessoa = await form.asave()
+                    # pessoa = await form.asave()
+                    await insert_queue.put(pessoa)
                 except IntegrityError:
                     return JsonResponseUnprocessableEntity(
                         data={"message": "o apelido já existe"},
