@@ -5,6 +5,7 @@ import uuid
 from asgiref.sync import sync_to_async
 from functools import reduce
 
+from datetime import datetime
 from django.db import models
 from django.db.models.functions import Cast
 from django.contrib.postgres.fields import ArrayField
@@ -31,6 +32,7 @@ class Pessoa(models.Model):
     # https://pganalyze.com/blog/gin-index
     # https://pganalyze.com/blog/full-text-search-django-postgres
     # https://docs.djangoproject.com/en/4.2/ref/contrib/postgres/search/#searchquery
+    # https://docs.djangoproject.com/en/4.2/ref/contrib/postgres/search/#performance
     # https://www.postgresql.org/docs/current/textsearch-controls.html
     # https://docs.djangoproject.com/en/4.2/ref/migration-operations/#separatedatabaseandstate
     # https://docs.djangoproject.com/en/4.2/ref/contrib/postgres/search/#postgresql-fts-search-configuration
@@ -70,10 +72,14 @@ class Pessoa(models.Model):
     #     return super().save(*args, **kwargs)
 
     def to_dict(self):
+        if isinstance(self.nascimento, str):
+            nascimento = datetime.strptime(self.nascimento, "%Y-%m-%d").date()
+        else:
+            nascimento = self.nascimento
         return {
             "apelido": self.apelido,
             "nome": self.nome,
-            "nascimento": self.nascimento.isoformat(),
+            "nascimento": nascimento.isoformat(),
             "stack": self.stack,
         }
 
