@@ -1,4 +1,5 @@
 from django.core.cache import cache
+# from rinha_de_backend.redis_cache import cache
 
 from .models import Pessoa
 
@@ -20,15 +21,7 @@ async def get_pessoa_dict_by_cache_or_db(pk):
 
 
 async def has_pessoa_apelido_cached(pessoa):
-    if await cache.ahas_key(_pessoa_apelido_key(pessoa.apelido)):
-        return True
-    try:
-        pessoa = await Pessoa.objects.aget(apelido=pessoa.apelido)
-        pessoa_dict = pessoa.to_dict()
-        await set_pessoa_dict_cache(pessoa.pk, pessoa_dict)
-        return True
-    except Pessoa.DoesNotExist:
-        return False
+    return await cache.ahas_key(_pessoa_apelido_key(pessoa.apelido))
 
 
 async def set_pessoa_dict_cache(pk, pessoa_dict):

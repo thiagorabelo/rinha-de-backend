@@ -49,7 +49,6 @@ class PessoaView(View):
             return await self._get_one(request, pessoa_pk)
         return await self._filter(request)
 
-    # uvicorn --port 8000 --workers 1 --loop uvloop --limit-concurrency 1000 --backlog 500 --limit-max-requests 2000 "rinha_de_backend.asgi:application"
     async def post(self, request: HttpRequest):
         try:
             form = PessoaForm(data=get_body_as_json(request))
@@ -65,7 +64,6 @@ class PessoaView(View):
                     )
 
                 try:
-                    # pessoa = await form.asave()
                     bulk_insert_buffer.adicionar_pessoa(pessoa)
                 except IntegrityError:
                     return JsonResponseUnprocessableEntity(
