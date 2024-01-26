@@ -41,6 +41,7 @@ class Command(RunserverCommand):
 
         try:
             handler = self.get_handler(*args, **options)
+            # uvicorn --port 8000 --workers 1 --loop uvloop --backlog 2048 --no-access-log "rinha_de_backend.asgi:application"
             run(
                 app=handler,
                 host=self.addr,
@@ -56,6 +57,7 @@ class Command(RunserverCommand):
 
                 # Resource Limits - https://www.uvicorn.org/settings/#resource-limits
                 backlog=2048,
+                #access_log=False,
             )
         except OSError as e:
             # Use helpful error messages instead of ugly tracebacks.
