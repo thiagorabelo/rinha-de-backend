@@ -1,9 +1,10 @@
 import asyncio
-import psycopg
+import json
 import requests
 import statistics
 import tqdm
 
+from itertools import count
 from functools import partial
 from psycopg.rows import dict_row
 from time import perf_counter
@@ -12,29 +13,21 @@ from urllib.parse import quote
 
 class PostBenchmark:
 
-    select_query = """
-    select id, apelido, nome, nascimento, stack from pessoas
-    """.strip()
-
-    def __init__(self, url):
+    def __init__(self, url, json_file):
         self._endpoint = None
         self.url = url
+        self.json_file = json_file
 
-    def _retrieve_data(self, cursor, limit=None):
-        query = self.select_query
-        if limit:
-            query += " limit %(limit)s"
-        cursor.execute(query, {"limit": limit})
-        return cursor.fetchall()
+    def _retrieve_data(self, limit=None):
+        with open(self.json_file, "rt") as json_file:
+            counter = range(limit) if limit else count()
+            result = [
+                line for _, line in zip(counter, json_file)
+            ]
+            return result
 
-    def _prepare_data(self, row):
-        return {
-            "id": str(row["id"]),
-            "apelido": row["apelido"],
-            "nome": row["nome"],
-            "nascimento": str(row["nascimento"]),
-            "stack": row["stack"]
-        }
+    def _prepare_data(self, line):
+        return json.loads(line)
 
     @property
     def endpoint(self):
@@ -46,14 +39,16 @@ class PostBenchmark:
         return requests.post(endpoint, json=data)
 
     def response_data_saver(self, _file, response):
-        print(response.headers["Location"], file=_file)
+        try:
+            print(response.headers["Location"], file=_file)
+        except KeyError:
+            pass
 
-    def run(self, executor, connection, limit=None, result_id_file=None):
-        with connection.cursor(row_factory=dict_row) as cursor:
-            items = (
-                (self.endpoint, self._prepare_data(d))
-                for d in self._retrieve_data(cursor, limit=limit)
-            )
+    def run(self, executor, limit=None, result_id_file=None):
+        items = (
+            (self.endpoint, self._prepare_data(d))
+            for d in self._retrieve_data(limit=limit)
+        )
         if result_id_file:
             with open(result_id_file, "wt") as output:
                 return executor(self.invoke_request, items, partial(self.response_data_saver, output))
@@ -62,30 +57,29 @@ class PostBenchmark:
 
 class FindByTermBenchmark:
 
-    select_query = "select termo from termos"
-
-    def __init__(self, url):
+    def __init__(self, url, resource_path):
         self.url = url
+        self.resource_path = resource_path
 
     def endpoint(self, term):
         return f"{self.url}/pessoas?t={quote(term)}"
 
-    def _retrieve_data(self, cursor, limit=None):
-        query = self.select_query
-        if limit:
-            query += " limit %(limit)s"
-        cursor.execute(query, {"limit": limit})
-        return cursor.fetchall()
+    def _retrieve_data(self, limit=None):
+        with open(self.resource_path, "rt") as term_file:
+            counter = range(limit) if limit else count()
+            result = [
+                d for _, d in zip(counter, term_file)
+            ]
+            return result
 
     def invoke_request(self, endpoint, _):
         return requests.get(endpoint)
 
-    def run(self, executor, connection, limit=None):
-        with connection.cursor() as cursor:
-            items = (
-                (self.endpoint(term[0]), None)
-                for term in self._retrieve_data(cursor, limit=limit)
-            )
+    def run(self, executor, limit=None):
+        items = (
+            (self.endpoint(term[0]), None)
+            for term in self._retrieve_data(limit=limit)
+        )
         return executor(self.invoke_request, items)
 
 
@@ -108,7 +102,7 @@ class GetByIdBenckmark:
         return requests.get(endpoint)
 
     # TODO: Repetir (para atingir o cache), Randômico, etc?
-    def run(self, executor, connection, limit=None):
+    def run(self, executor, limit=None):
         items = (
             (self.endpoint(id_), None)
             for id_ in self._retrieve_data(limit=limit)
@@ -127,18 +121,12 @@ class GetByIdBenckmark:
 
 class RunBenchmark:
 
-    select_query = """
-    select id, apelido, nome, nascimento, stack from pessoas_pessoa
-    """.strip()
-
-    def __init__(self, url, **connection_params):
-        self.connection = psycopg.connect(**connection_params)
+    def __init__(self, url):
         self.url = url
 
     def _run(self, request_maker, **kwargs):
         mean, variance, stdev = request_maker.run(
             self._executor,
-            self.connection,
             **kwargs
         )
 
@@ -146,16 +134,16 @@ class RunBenchmark:
         print(f"Variance: {variance}")
         print(f"StdEv: {stdev}")
 
-    def post(self, limit=None, result_id_file=None):
+    def post(self, csv_path, limit=None, result_id_file=None):
         if not(limit is None) and limit < 2:
             raise ValueError("Limit must be at least 2")
-        poster = PostBenchmark(self.url)
+        poster = PostBenchmark(self.url, csv_path)
         self._run(poster, limit=limit, result_id_file=result_id_file)
 
-    def find_by_term(self, limit=None):
+    def find_by_term(self, term_resources_file, limit=None):
         if not(limit is None) and limit < 2:
             raise ValueError("Limit must be at least 2")
-        getter = FindByTermBenchmark(self.url)
+        getter = FindByTermBenchmark(self.url, term_resources_file)
         self._run(getter, limit=limit)
 
     def get_by_id(self, id_resources_file, limit=None):

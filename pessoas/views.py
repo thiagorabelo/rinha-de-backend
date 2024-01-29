@@ -31,6 +31,8 @@ class PessoaView(View):
         except Pessoa.DoesNotExist:
             return JsonResponseNotFound(data={"message": "Pessoa não encontrada"})
 
+    # TODO: Muito lento. Talvez seja interessante usar uma
+    #       coluna de texto normal apenas com um índice.
     async def _filter(self, request):
         if t := request.GET.get('t'):
             terms = t.split()

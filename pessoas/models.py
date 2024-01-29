@@ -16,7 +16,7 @@ from django.contrib.postgres.indexes import GinIndex
 class Pessoa(models.Model):
     id = models.UUIDField("Id", primary_key=True, default=uuid.uuid4, editable=False)
     apelido = models.CharField("Apelido", max_length=32, unique=True, null=False, blank=False)
-    nome = models.CharField("Nome", max_length=512, null=False, blank=False)
+    nome = models.CharField("Nome", max_length=100, null=False, blank=False)
     nascimento = models.DateField("Data de Nascimento", null=False, blank=False)
     stack = ArrayField(
         models.CharField(max_length=32, blank=False),
