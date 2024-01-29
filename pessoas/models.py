@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models.functions import Cast
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import SearchVectorField, SearchQuery
-from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.indexes import GinIndex, GistIndex
 
 
 class Pessoa(models.Model):
@@ -41,11 +41,14 @@ class Pessoa(models.Model):
     # search_field = models.TextField("Campo de Busca", blank=True, null=False, default="")
     search_field = SearchVectorField("Campo de busca", null=False)
 
+    search_row = models.CharField("Search Row", max_length=2048, null=True, blank=True)
+
     class Meta:
         verbose_name = "Pessoa"
         verbose_name_plural = "Pessoas"
         indexes = (
             GinIndex(fields=["search_field"]),
+            GistIndex(name="pessoas_pes_search__1a433c_gist", fields=["search_row"], opclasses=["gist_trgm_ops"]),
         )
 
     def __str__(self):
@@ -55,12 +58,12 @@ class Pessoa(models.Model):
         return f"/pessoas/{self.id}"
 
     def _do_insert(self, manager, using, fields, returning_fields, raw):
-        exclude_fields = ('search_field',)
+        exclude_fields = ("search_field", "search_row")
         fields = filter(lambda f: f.attname not in exclude_fields, fields)
         return super()._do_insert(manager, using, tuple(fields), returning_fields, raw)
 
     def _do_update(self, base_qs, using, pk_val, values, update_fields, forced_update):
-        exclude_fields = ('search_field',)
+        exclude_fields = ("search_field", "search_row")
         values = list(filter(lambda value_tuple: value_tuple[0].attname not in exclude_fields, values))
         return super()._do_update(base_qs, using, pk_val, values, update_fields, forced_update)
 
@@ -102,6 +105,18 @@ class Pessoa(models.Model):
         search_query = SearchQuery(tsquery, search_type="raw")
         queryset = cls.objects.filter(models.Q(search_field=search_query))
 
+        if as_dict:
+            return queryset.values(
+                'apelido',
+                'nome',
+                'stack'
+            ).annotate(nascimento=Cast('nascimento', models.CharField()))
+        return queryset
+
+    @classmethod
+    def search_terms2(cls, *terms, as_dict=False):
+        q = reduce(operator.and_, map(lambda term: models.Q(search_row__contains=term.lower()), terms))
+        queryset = cls.objects.filter(q)
         if as_dict:
             return queryset.values(
                 'apelido',

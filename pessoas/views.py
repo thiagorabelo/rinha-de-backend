@@ -36,7 +36,7 @@ class PessoaView(View):
     async def _filter(self, request):
         if t := request.GET.get('t'):
             terms = t.split()
-            ait = Pessoa.search_terms(*terms, as_dict=True)[:50].aiterator()
+            ait = Pessoa.search_terms2(*terms, as_dict=True)[:50].aiterator()
             return JsonResponse(
                 data=[p async for p in ait],
                 headers={"My-Host-Name": settings.MY_HOST_NAME},
