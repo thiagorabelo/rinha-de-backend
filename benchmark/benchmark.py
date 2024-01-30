@@ -1,13 +1,12 @@
-import asyncio
 import json
-import psycopg
 import requests
 import statistics
 import tqdm
 
+from django.conf import settings
+from django.db import connections
 from itertools import count
 from functools import partial
-from psycopg.rows import dict_row
 from time import perf_counter
 from urllib.parse import quote
 
@@ -176,7 +175,17 @@ class RunBenchmark:
         )
 
 
-def sql_find_by_tsvector(path, cooninfo, limit=None):
+def _get_conn():
+    conf = settings.DATABASES["default"]
+    user = conf["USER"]
+    password = conf["PASSWORD"]
+    host = conf["HOST"]
+    port = conf["PORT"]
+    name = conf["NAME"]
+    return f"postgresql://{user}:{password}@{host}:{port}/{name}"
+
+
+def sql_find_by_tsvector(path, limit=None, close_con=False):
     lines = None
     with open(path, "rt") as term_file:
             counter = range(limit) if limit else count()
@@ -192,20 +201,26 @@ def sql_find_by_tsvector(path, cooninfo, limit=None):
 
     times = []
 
-    with psycopg.connect(cooninfo) as connection:
-        with connection.cursor() as cursor:
-            for idx, line in enumerate(lines):
-                terms = " & ".join(line.split())
+    for idx, line in enumerate(lines):
+        terms = " & ".join(line.split())
 
-                print(">>> " + sql % {"terms": terms})
+        # print(">>> " + sql % {"terms": terms})
 
-                begin = perf_counter()
+        connection = None
+        begin = perf_counter()
+        try:
+            connection = connections["default"]
+            with connection.cursor() as cursor:
                 cursor.execute(sql, {"terms": terms})
                 data = cursor.fetchall()
-                end = perf_counter()
-                print(f"{idx}: {len(data)=}")
+        finally:
+            if close_con:
+                connection.close()
+        end = perf_counter()
 
-                times.append(end - begin)
+        print(f"{idx}: {len(data)=}")
+
+        times.append(end - begin)
 
     mean = statistics.mean(times)
     variance = statistics.variance(times)
@@ -216,7 +231,7 @@ def sql_find_by_tsvector(path, cooninfo, limit=None):
     print(f"StdEv: {stdev}")
 
 
-def sql_find_by_text(path, cooninfo, limit=None):
+def sql_find_by_text(path, limit=None, close_con=False):
     lines = None
     with open(path, "rt") as term_file:
             counter = range(limit) if limit else count()
@@ -231,24 +246,30 @@ def sql_find_by_text(path, cooninfo, limit=None):
 
     times = []
 
-    with psycopg.connect(cooninfo) as connection:
-        with connection.cursor() as cursor:
-            for idx, line in enumerate(lines):
-                clause = """"pessoas_pessoa"."search_row" like '%%' || lower( %s ) || '%%' """
-                terms = line.split()
-                clauses = [clause for _ in terms]
-                sql_ = sql + " " + " and ".join(clauses) + " LIMIT 50"
-                
-                #print(">>> " + sql_ + " :: " + str(terms))
-                # print(">>> " + (sql_ % terms))
+    for idx, line in enumerate(lines):
+        clause = """"pessoas_pessoa"."search_row" like '%%' || lower( %s ) || '%%' """
+        terms = line.split()
+        clauses = [clause for _ in terms]
+        sql_ = sql + " " + " and ".join(clauses) + " LIMIT 50"
 
-                begin = perf_counter()
+        # print(">>> " + sql_ + " :: " + str(terms))
+        # print(">>> " + (sql_ % terms))
+
+        connection = None
+        begin = perf_counter()
+        try:
+            connection = connections["default"]
+            with connection.cursor() as cursor:
                 cursor.execute(sql_, terms)
                 data = cursor.fetchall()
-                end = perf_counter()
-                print(f"{idx}: {len(data)=}")
+        finally:
+            if close_con:
+                connection.close()
+        end = perf_counter()
 
-                times.append(end - begin)
+        print(f"{idx}: {len(data)=}")
+
+        times.append(end - begin)
 
     mean = statistics.mean(times)
     variance = statistics.variance(times)
@@ -257,28 +278,3 @@ def sql_find_by_text(path, cooninfo, limit=None):
     print(f"Mean: {mean} seconds")
     print(f"Variance: {variance}")
     print(f"StdEv: {stdev}")
-
-
-
-def main():
-    pass
-
-def async_tests():
-    async def teste(t=5, s=0.5):
-        c = 0
-        while c < t:
-            await asyncio.sleep(s)
-            print(f"Dormi por {s}s")
-            c += 1
-
-
-    async def main():
-        print("Olá da main coro")
-        loop = asyncio.get_event_loop()
-        loop.create_task(teste())
-        for i in range(20):
-            await asyncio.sleep(1)
-            print("Main dormiu 1s")
-
-
-    asyncio.run(main())
