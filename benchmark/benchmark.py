@@ -1,5 +1,6 @@
 import asyncio
 import json
+import psycopg
 import requests
 import statistics
 import tqdm
@@ -134,10 +135,10 @@ class RunBenchmark:
         print(f"Variance: {variance}")
         print(f"StdEv: {stdev}")
 
-    def post(self, csv_path, limit=None, result_id_file=None):
+    def post(self, json_path, limit=None, result_id_file=None):
         if not(limit is None) and limit < 2:
             raise ValueError("Limit must be at least 2")
-        poster = PostBenchmark(self.url, csv_path)
+        poster = PostBenchmark(self.url, json_path)
         self._run(poster, limit=limit, result_id_file=result_id_file)
 
     def find_by_term(self, term_resources_file, limit=None):
@@ -151,7 +152,6 @@ class RunBenchmark:
             raise ValueError("Limit must be at least 2")
         getter = GetByIdBenckmark(self.url, id_resources_file)
         self._run(getter, limit=limit)
-
 
     def _executor(self, request_invoker, items, callback=None):
         times = []
@@ -174,6 +174,91 @@ class RunBenchmark:
             statistics.variance(times),
             statistics.stdev(times),
         )
+
+
+def sql_find_by_tsvector(path, cooninfo, limit=None):
+    lines = None
+    with open(path, "rt") as term_file:
+            counter = range(limit) if limit else count()
+            lines = [
+                d for _, d in zip(counter, term_file)
+            ]
+
+    sql = """
+        SELECT "pessoas_pessoa"."apelido", "pessoas_pessoa"."nome", "pessoas_pessoa"."stack",
+        ("pessoas_pessoa"."nascimento")::varchar AS "nascimento" FROM "pessoas_pessoa" WHERE
+        "pessoas_pessoa"."search_field" @@ (to_tsquery( %(terms)s )) LIMIT 50
+    """.strip()
+
+    times = []
+
+    with psycopg.connect(cooninfo) as connection:
+        with connection.cursor() as cursor:
+            for idx, line in enumerate(lines):
+                terms = " & ".join(line.split())
+
+                print(">>> " + sql % {"terms": terms})
+
+                begin = perf_counter()
+                cursor.execute(sql, {"terms": terms})
+                data = cursor.fetchall()
+                end = perf_counter()
+                print(f"{idx}: {len(data)=}")
+
+                times.append(end - begin)
+
+    mean = statistics.mean(times)
+    variance = statistics.variance(times)
+    stdev = statistics.stdev(times)
+
+    print(f"Mean: {mean} seconds")
+    print(f"Variance: {variance}")
+    print(f"StdEv: {stdev}")
+
+
+def sql_find_by_text(path, cooninfo, limit=None):
+    lines = None
+    with open(path, "rt") as term_file:
+            counter = range(limit) if limit else count()
+            lines = [
+                d for _, d in zip(counter, term_file)
+            ]
+
+    sql = """
+        SELECT "pessoas_pessoa"."apelido", "pessoas_pessoa"."nome", "pessoas_pessoa"."stack",
+        ("pessoas_pessoa"."nascimento")::varchar AS "nascimento" FROM "pessoas_pessoa" WHERE
+    """.strip()
+
+    times = []
+
+    with psycopg.connect(cooninfo) as connection:
+        with connection.cursor() as cursor:
+            for idx, line in enumerate(lines):
+                clause = """"pessoas_pessoa"."search_row" like '%%' || lower( %s ) || '%%' """
+                terms = line.split()
+                clauses = [clause for _ in terms]
+                sql_ = sql + " " + " and ".join(clauses) + " LIMIT 50"
+                
+                #print(">>> " + sql_ + " :: " + str(terms))
+                # print(">>> " + (sql_ % terms))
+
+                begin = perf_counter()
+                cursor.execute(sql_, terms)
+                data = cursor.fetchall()
+                end = perf_counter()
+                print(f"{idx}: {len(data)=}")
+
+                times.append(end - begin)
+
+    mean = statistics.mean(times)
+    variance = statistics.variance(times)
+    stdev = statistics.stdev(times)
+
+    print(f"Mean: {mean} seconds")
+    print(f"Variance: {variance}")
+    print(f"StdEv: {stdev}")
+
+
 
 def main():
     pass
