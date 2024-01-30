@@ -17,4 +17,4 @@ WORKDIR /app
 
 USER galo
 
-CMD /app/start_uvicorn.sh
+CMD /app/start_gunicorn.sh

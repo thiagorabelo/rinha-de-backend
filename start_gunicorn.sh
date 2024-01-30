@@ -5,12 +5,14 @@ WORKERS="${WORKERS:-4}"
 BIND="${BIND:-unix:/tmp/socks/$(hostname).sock}"
 LOG_LEVEL="${LOG_LEVEL:-error}"
 
+echo "O LOG_LEVEL é $LOG_LEVEL"
+
 
 exec gunicorn \
-    "rinha_de_backend.asgi:application" \
-    --worker-class "rinha_de_backend.uvicorn_worker.CustomUvicornWorker" \
+    "rinha_de_backend.wsgi:application" \
+    --worker-class 'gevent' \
+    --workers "${WORKERS}" \
     --name "Rinha de Backend - Python" \
     --bind "${BIND}" \
-    --workers "${WORKERS}" \
     --log-level "${LOG_LEVEL}" \
     --log-file -

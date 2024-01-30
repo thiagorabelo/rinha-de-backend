@@ -18,12 +18,11 @@ from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
 bulk_insert_buffer = BulkInsertBuffer(100, 1)
 
 
-# https://docs.djangoproject.com/en/4.2/topics/async/
 class PessoaView(View):
 
-    async def _get_one(self, request, pk):
+    def _get_one(self, request, pk):
         try:
-            pessoa_dict = await get_pessoa_dict_by_cache_or_db(pk)
+            pessoa_dict = get_pessoa_dict_by_cache_or_db(pk)
             return JsonResponse(
                 data=pessoa_dict,
                 headers={"My-Host-Name": settings.MY_HOST_NAME}
@@ -33,12 +32,12 @@ class PessoaView(View):
 
     # TODO: Muito lento. Talvez seja interessante usar uma
     #       coluna de texto normal apenas com um índice.
-    async def _filter(self, request):
+    def _filter(self, request):
         if t := request.GET.get('t'):
             terms = t.split()
-            ait = Pessoa.search_terms2(*terms, as_dict=True)[:50].aiterator()
+            qs = Pessoa.search_terms(*terms, as_dict=True)[:50]
             return JsonResponse(
-                data=[p async for p in ait],
+                data=[p for p in qs],
                 headers={"My-Host-Name": settings.MY_HOST_NAME},
                 safe=False
             )
@@ -46,18 +45,18 @@ class PessoaView(View):
             data={"message": """Busca inválida (Informe o termo de busca "t")"""}
         )
 
-    async def get(self, request: HttpRequest, pessoa_pk=0):
+    def get(self, request: HttpRequest, pessoa_pk=0):
         if pessoa_pk:
-            return await self._get_one(request, pessoa_pk)
-        return await self._filter(request)
+            return self._get_one(request, pessoa_pk)
+        return self._filter(request)
 
-    async def post(self, request: HttpRequest):
+    def post(self, request: HttpRequest):
         try:
             form = PessoaForm(data=get_body_as_json(request))
             if form.is_valid():
                 pessoa = form.instance
 
-                if await has_pessoa_apelido_cached(pessoa):
+                if has_pessoa_apelido_cached(pessoa):
                     return JsonResponseUnprocessableEntity(
                         data={"message": "unique violation"},
                         headers={
@@ -66,7 +65,8 @@ class PessoaView(View):
                     )
 
                 try:
-                    bulk_insert_buffer.adicionar_pessoa(pessoa)
+                    # bulk_insert_buffer.adicionar_pessoa(pessoa)
+                    pessoa = form.save()
                 except IntegrityError:
                     return JsonResponseUnprocessableEntity(
                         data={"message": "o apelido já existe"},
@@ -75,7 +75,7 @@ class PessoaView(View):
                         }
                     )
                 finally:
-                    await set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
+                    set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
 
                 return JsonResponse(
                     data={"message": "criado"},
@@ -100,8 +100,8 @@ class PessoaView(View):
             )
 
 
-async def contagem_pessoas(request):
-    total = await Pessoa.objects.all().acount()
+def contagem_pessoas(request):
+    total = Pessoa.objects.all().count()
     return HttpResponse(
         content=f"{total}".encode("utf-8"),
         content_type="application/json",
