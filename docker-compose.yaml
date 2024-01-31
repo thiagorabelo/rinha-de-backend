@@ -98,8 +98,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.1'
-          memory: '0.5GB'
+          cpus: "0.1"
+          memory: "0.5GB"
 
   postgres:  # 1.0GB / 0.45
     # Tive que fazer build da própia imagem para poder
