@@ -5,8 +5,6 @@ WORKERS="${WORKERS:-4}"
 BIND="${BIND:-unix:/tmp/socks/$(hostname).sock}"
 LOG_LEVEL="${LOG_LEVEL:-error}"
 
-echo "O LOG_LEVEL é $LOG_LEVEL"
-
 
 exec gunicorn \
     "rinha_de_backend.wsgi:application" \

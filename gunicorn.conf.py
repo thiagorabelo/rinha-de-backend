@@ -186,9 +186,6 @@ proc_name = None
 
 def post_fork(server, worker):
     import sys
-    from psycogreen.gevent import patch_psycopg
-    patch_psycopg()
-    print(">>> Patched!", file=sys.__stdout__)
     print(f">>> {worker.__module__}", file=sys.__stdout__)
     sys.__stdout__.flush()
     server.log.info("Worker spawned (pid: %s)", worker.pid)

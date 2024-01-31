@@ -40,7 +40,10 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://stackoverflow.com/questions/38425620/gunicorn-workers-and-threads>
 - <https://docs.rhodecode.com/RhodeCode-Enterprise/admin/tuning-gunicorn.html>
 - <https://dev.to/lsena/gunicorn-worker-types-how-to-choose-the-right-one-4n2c>
-- <https://www.uvicorn.org/deployment/>
 - <https://death.andgravity.com/asyncio-bridge>
 - <https://www.digitalocean.com/community/tutorials/how-to-use-threadpoolexecutor-in-python-3-pt>
 - <https://awari.com.br/como-utilizar-o-threadpoolexecutor-em-python-para-otimizar-a-execucao-de-tarefas/>
+- <https://bbc.github.io/cloudfit-public-docs/asyncio/asyncio-part-1>
+- <https://bbc.github.io/cloudfit-public-docs/asyncio/asyncio-part-2.html>
+- <https://death.andgravity.com/asyncio-bridge>
+- <https://luis-sena.medium.com/gunicorn-worker-types-youre-probably-using-them-wrong-381239e13594>
