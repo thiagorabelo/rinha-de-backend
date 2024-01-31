@@ -95,7 +95,7 @@ DATABASES = {
         'PASSWORD': os.environ["DB_PASSWORD"],
         'HOST': os.environ["DB_HOST"],
         'PORT': os.getenv("DB_PORT", '5432'),
-        'CONN_MAX_AGE': None if DEBUG else None if (max_age := os.getenv("DB_CONN_MAX_AGE", "None")) == "None" else int(max_age)
+        'CONN_MAX_AGE': 0 if DEBUG else 0 if (max_age := os.getenv("DB_CONN_MAX_AGE", "0")) == "0" else int(max_age)
     }
 }
 
