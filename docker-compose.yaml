@@ -21,6 +21,7 @@ x-rinha-de-backend-default: &rinha-de-backend-default
 
 x-app-environment-default: &app-environment-default
   WORKERS: "2"
+  THREADS: "2"  # N Workers * N Threads = N*N Total Workers
   # LOG_LEVEL: "debug"
 
   SECRET_KEY: "j#d)x3j5-yw3&j!7wh@*c&fi1b9-j%t5w$=c=!m^ts_w$)l1l!"
@@ -117,7 +118,7 @@ services:
       - ./compose/db/data:/var/lib/postgresql/data:rw
     env_file:
       - ./compose/db/.env
-    command: postgres -c max_connections=400 -c shared_buffers="425MB" -c log_min_messages=error
+    command: postgres -c max_connections=400 -c shared_buffers="250MB" -c log_min_messages=error
     expose:
       - "5432"
     ports:
