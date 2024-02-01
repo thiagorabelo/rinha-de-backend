@@ -49,7 +49,13 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://stackoverflow.com/questions/38425620/gunicorn-workers-and-threads>
 - <https://docs.rhodecode.com/RhodeCode-Enterprise/admin/tuning-gunicorn.html>
 - <https://dev.to/lsena/gunicorn-worker-types-how-to-choose-the-right-one-4n2c>
+- <https://github.com/benoitc/gunicorn/issues/2183>
 
 ### Nginx
 
+- <https://nginx.org/en/docs/ngx_core_module.html>
+- <https://nginx.org/en/docs/http/ngx_http_upstream_module.html>
 - <https://linuxhint.com/what-is-keepalive-in-nginx>
+- <https://upcloud.com/resources/tutorials/configure-load-balancing-nginx>
+- <https://www.digitalocean.com/community/tutorials/understanding-nginx-server-and-location-block-selection-algorithms>
+- <https://www.digitalocean.com/community/tutorials/understanding-nginx-http-proxying-load-balancing-buffering-and-caching>

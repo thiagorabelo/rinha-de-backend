@@ -118,7 +118,7 @@ services:
       - ./compose/db/data:/var/lib/postgresql/data:rw
     env_file:
       - ./compose/db/.env
-    command: postgres -c max_connections=400 -c shared_buffers="250MB" -c log_min_messages=error
+    command: postgres -c log_min_messages=error -c max_connections=100 -c shared_buffers="256MB" -c work_mem="4MB" -c maintenance_work_mem="64MB" -c effective_cache_size="500MB"
     expose:
       - "5432"
     ports:
