@@ -87,19 +87,29 @@ WSGI_APPLICATION = 'rinha_de_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+def _get_db_backend(debug):
+    if debug:
+        return "django.db.backends.postgresql"
+    return "django_db_geventpool.backends.postgresql_psycopg2"
+
+def _get_db_options(debug):
+    if debug:
+        return {}
+    return {
+        'MAX_CONNS': 20,
+        'REUSE_CONNS': 10
+    }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django_db_geventpool.backends.postgresql_psycopg2',
+        'ENGINE': _get_db_backend(DEBUG),
         'NAME': os.environ["DB_NAME"],
         'USER': os.environ["DB_USER"],
         'PASSWORD': os.environ["DB_PASSWORD"],
         'HOST': os.environ["DB_HOST"],
         'PORT': os.getenv("DB_PORT", '5432'),
         'CONN_MAX_AGE': 0,  # Para uso com django_db_geventpool, deve ser 0
-        'OPTIONS': {
-            'MAX_CONNS': 20,
-            'REUSE_CONNS': 10
-        }
+        'OPTIONS': _get_db_options(DEBUG)
     }
 }
 
