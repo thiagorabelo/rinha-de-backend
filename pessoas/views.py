@@ -1,10 +1,7 @@
-import asyncio
-
 from django.conf import settings
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpRequest
-from django.views import View
+from django.http import HttpResponse
 from uuid import UUID
 
 from ninja import NinjaAPI
