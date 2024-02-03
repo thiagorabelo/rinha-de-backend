@@ -2,7 +2,6 @@ import json
 import operator
 import uuid
 
-from asgiref.sync import sync_to_async
 from functools import reduce
 
 from datetime import datetime
@@ -130,13 +129,5 @@ class Pessoa(models.Model):
         return cls.filter_as_dict(**kwargs).get()
 
     @classmethod
-    async def aget_as_dict(cls, **kwargs):
-        return await cls.filter_as_dict(**kwargs).aget()
-
-    @classmethod
     def from_json(cls, json_str):
         return cls.objects.create(**json.loads(json_str))
-
-    @classmethod
-    async def afrom_json(cls, json_str):
-        return await cls.objects.acreate(**json.loads(json_str))

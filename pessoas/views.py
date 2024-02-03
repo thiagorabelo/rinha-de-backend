@@ -1,5 +1,3 @@
-import asyncio
-
 from django.conf import settings
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -9,13 +7,10 @@ from django.views import View
 from .forms import PessoaForm
 from .http import JsonResponseBadRequest, JsonResponseNotFound, \
                   JsonResponseUnprocessableEntity
-from .utils import get_body_as_json, BulkInsertBuffer
+from .utils import get_body_as_json
 from .models import Pessoa
 from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
-
-
-bulk_insert_buffer = BulkInsertBuffer(100, 1)
 
 
 class PessoaView(View):
