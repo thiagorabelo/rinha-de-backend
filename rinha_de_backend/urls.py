@@ -21,12 +21,5 @@ from pessoas import views
 
 
 urlpatterns = [
-    # path("pessoas", views.PessoaView.as_view(), name="pessoas"),
-    # path("pessoas/<uuid:pessoa_pk>", views.PessoaView.as_view(), name="pessoa"),
-
-    path("pessoas", views.api.urls),
-
-    path("contagem-pessoas", views.contagem_pessoas, name="contagem-pessoas"),
-
-    # path('admin/', admin.site.urls),
+    path("", views.api.urls),
 ]

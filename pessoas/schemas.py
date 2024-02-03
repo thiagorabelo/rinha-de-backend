@@ -9,9 +9,9 @@ class PessoaSchema(ModelSchema):
         fields = ["apelido", "nome", "nascimento", "stack"]
 
 
-class UnprocessableEntityResponseSchema(Schema):
+class CreatedResponseSchema(Schema):
     message: str
 
 
-class CreatedResponseSchema(Schema):
+class ErrorResponseSchema(Schema):
     message: str

@@ -5,21 +5,20 @@ from django.http import JsonResponse, HttpResponse
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpRequest
 from django.views import View
+from uuid import UUID
 
 from ninja import NinjaAPI
 
-from .forms import PessoaForm
-from .http import JsonResponseBadRequest, JsonResponseNotFound
 from .models import Pessoa
 from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
-from .schemas import PessoaSchema, CreatedResponseSchema, UnprocessableEntityResponseSchema
+from .schemas import PessoaSchema, CreatedResponseSchema, ErrorResponseSchema
 
 
 api = NinjaAPI(title="Rinha de Backend")
 
 
-@api.post("", response={200: CreatedResponseSchema, 422: UnprocessableEntityResponseSchema})
+@api.post("/pessoas", response={200: CreatedResponseSchema, 422: ErrorResponseSchema})
 def create_pessoa(request, payload: PessoaSchema, response: HttpResponse):
     response.headers["My-Host-Name"] = settings.MY_HOST_NAME
 
@@ -36,42 +35,28 @@ def create_pessoa(request, payload: PessoaSchema, response: HttpResponse):
         return 422, {"message": "Unique violation"}
 
 
-class PessoaView(View):
-
-    def _get_one(self, request, pk):
-        try:
-            pessoa_dict = get_pessoa_dict_by_cache_or_db(pk)
-            return JsonResponse(
-                data=pessoa_dict,
-                headers={"My-Host-Name": settings.MY_HOST_NAME}
-            )
-        except Pessoa.DoesNotExist:
-            return JsonResponseNotFound(data={"message": "Pessoa não encontrada"})
-
-    def _filter(self, request):
-        if t := request.GET.get('t'):
-            terms = t.split()
-            qs = Pessoa.search_terms(*terms, as_dict=True)[:50]
-            return JsonResponse(
-                data=[p for p in qs],
-                headers={"My-Host-Name": settings.MY_HOST_NAME},
-                safe=False
-            )
-        return JsonResponseBadRequest(
-            data={"message": """Busca inválida (Informe o termo de busca "t")"""}
-        )
-
-    def get(self, request: HttpRequest, pessoa_pk=0):
-        if pessoa_pk:
-            return self._get_one(request, pessoa_pk)
-        return self._filter(request)
+@api.get("/pessoas/{uuid:pessoa_pk}", response={200: PessoaSchema, 404: ErrorResponseSchema})
+def get_pessoa(request, pessoa_pk: UUID, response: HttpResponse):
+    try:
+        pessoa_dict = get_pessoa_dict_by_cache_or_db(pessoa_pk)
+        response.headers["My-Host-Name"] = settings.MY_HOST_NAME
+        return 200, pessoa_dict
+    except Pessoa.DoesNotExist:
+        return 404, {"message", "Pessoa não encontrada"}
 
 
+@api.get("/pessoas", response={200: list[PessoaSchema], 400: ErrorResponseSchema})
+def find_pessoa(request, t: str, response: HttpResponse):
+    if not t:
+        return 400, {"message": """Busca inválida (Informe o termo de busca "t")"""}
+
+    terms = t.split()
+    qs = Pessoa.search_terms(*terms, as_dict=True)[:50]
+    response.headers["My-Host-Name"] = settings.MY_HOST_NAME
+    return 200, qs
+
+
+@api.get("/contagem-pessoas")
 def contagem_pessoas(request):
     total = Pessoa.objects.all().count()
-    return HttpResponse(
-        content=f"{total}".encode("utf-8"),
-        content_type="application/json",
-        headers={"My-Host-Name": settings.MY_HOST_NAME},
-        status=200
-    )
+    return total
