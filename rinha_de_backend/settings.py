@@ -96,8 +96,8 @@ def _get_db_options(debug):
     if debug:
         return {}
     return {
-        'MAX_CONNS': 20,
-        'REUSE_CONNS': 10
+        'MAX_CONNS': 23,
+        'REUSE_CONNS': 23
     }
 
 DATABASES = {

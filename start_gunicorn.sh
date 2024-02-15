@@ -8,6 +8,9 @@ LOG_LEVEL="${LOG_LEVEL:-error}"
 
 echo "O LOG_LEVEL é $LOG_LEVEL"
 
+if [[ "${MIGRATE}" == "1" ]]; then
+    sleep 5 && python manage.py migrate
+fi
 
 exec gunicorn \
     "rinha_de_backend.wsgi:application" \

@@ -33,14 +33,14 @@ x-app-environment-default: &app-environment-default
   DB_PASSWORD: "cocorico"
   DB_HOST: "postgres"
   DB_PORT: 5432
-  DB_CONN_MAX_AGE: 100
+  DB_CONN_MAX_AGE: 0
 
   CACHE_LOCATION: "redis://redis:6379/0"
 
   CPROFILE_MIDDLEWARE: "0"
 
 
-services:
+services:  # 1.5 CPUs e 3.0 GB RAM
 
   nginx:  # 0.5GB / 0.15
     image: nginx:${NGINX_TAG}
@@ -60,25 +60,16 @@ services:
           cpus: "0.15"
           memory: "0.5GB"
 
-  app0:
-    <<: *rinha-de-backend-default
-    hostname: app0
-    restart: "no"
-    environment:
-      <<: *app-environment-default
-      ALLOWED_HOSTS: "app1,app2,localhost,127.0.0.1,0.0.0.0"
-    command: sh -c '( sleep 5 && ./manage.py migrate ) && exit 0'
-    deploy: {}
-
   app1:  # 0.5GB / 0.4
     <<: *rinha-de-backend-default
     hostname: app1
     environment:
       <<: *app-environment-default
       ALLOWED_HOSTS: "app1,localhost,127.0.0.1,0.0.0.0"
+      MIGRATE: "1"
     depends_on:
+      - redis
       - postgres
-      - app0
 
   app2:  # 0.5GB / 0.4
     <<: *rinha-de-backend-default
@@ -87,8 +78,8 @@ services:
       <<: *app-environment-default
       ALLOWED_HOSTS: "app2,localhost,127.0.0.1,0.0.0.0"
     depends_on:
+      - redis
       - postgres
-      - app0
 
   redis:  # 0.5GB / 0.1
     image: redis:7.2.4-alpine
