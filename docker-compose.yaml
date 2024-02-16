@@ -10,19 +10,24 @@ x-rinha-de-backend-default: &rinha-de-backend-default
   expose:
     - "8000"
   depends_on:
-    - postgres
-    - redis
+    redis:
+      condition: service_started
+    postgres:
+      condition: service_healthy
+    pgbouncer:
+      condition: service_started
   deploy:
     resources:
       limits:
-        cpus: "0.4"
-        memory: "0.5GB"
+        memory: "512MB"
+        cpus: "0.3"
 
 
 x-app-environment-default: &app-environment-default
+  WORKER_CLASS: "gevent"
   WORKERS: "2"
   THREADS: "2"  # N Workers * N Threads = N*N Total Workers
-  # LOG_LEVEL: "debug"
+  # LOG_LEVEL: "info"
 
   SECRET_KEY: "j#d)x3j5-yw3&j!7wh@*c&fi1b9-j%t5w$=c=!m^ts_w$)l1l!"
 
@@ -31,9 +36,10 @@ x-app-environment-default: &app-environment-default
   DB_NAME: "rinha_de_backend"
   DB_USER: "galo"
   DB_PASSWORD: "cocorico"
-  DB_HOST: "postgres"
-  DB_PORT: 5432
-  DB_CONN_MAX_AGE: 0
+  DB_HOST: "pgbouncer"
+  DB_PORT: 6432
+  DB_USE_DB_GEVENTPOOL: 1  # Veja se => WORKER_CLASS: "gevent"
+  DB_CONN_MAX_AGE: 3  # DB_USE_DB_GEVENTPOOL=1 => DB_CONN_MAX_AGE=0
 
   CACHE_LOCATION: "redis://redis:6379/0"
 
@@ -42,7 +48,7 @@ x-app-environment-default: &app-environment-default
 
 services:  # 1.5 CPUs e 3.0 GB RAM
 
-  nginx:  # 0.5GB / 0.15
+  nginx:  # 384MB / 0.15
     image: nginx:${NGINX_TAG}
     hostname: nginx
     restart: always
@@ -50,38 +56,34 @@ services:  # 1.5 CPUs e 3.0 GB RAM
       - ./compose/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./compose/socks:/tmp/socks:rw
     depends_on:
-      - app1
-      - app2
+      app1:
+        condition: service_started
+      app2:
+        condition: service_started
     ports:
       - "9999:9999"
     deploy:
       resources:
         limits:
+          memory: "384MB"
           cpus: "0.15"
-          memory: "0.5GB"
 
-  app1:  # 0.5GB / 0.4
+  app1:  # 512MB / 0.3
     <<: *rinha-de-backend-default
     hostname: app1
     environment:
       <<: *app-environment-default
       ALLOWED_HOSTS: "app1,localhost,127.0.0.1,0.0.0.0"
       MIGRATE: "1"
-    depends_on:
-      - redis
-      - postgres
 
-  app2:  # 0.5GB / 0.4
+  app2:  # 512MB / 0.3
     <<: *rinha-de-backend-default
     hostname: app2
     environment:
       <<: *app-environment-default
       ALLOWED_HOSTS: "app2,localhost,127.0.0.1,0.0.0.0"
-    depends_on:
-      - redis
-      - postgres
 
-  redis:  # 0.5GB / 0.1
+  redis:  # 512MB / 0.1
     image: redis:7.2.4-alpine
     hostname: redis
     command: redis-server --save "" --appendonly no --maxclients 20000
@@ -90,10 +92,35 @@ services:  # 1.5 CPUs e 3.0 GB RAM
     deploy:
       resources:
         limits:
+          memory: "512MB"
           cpus: "0.1"
-          memory: "0.5GB"
 
-  postgres:  # 1.0GB / 0.45
+  pgbouncer:  # 384MB / 0.25
+    image: bitnami/pgbouncer:latest
+    volumes:
+      - ./compose/pgbouncer/conf:/bitnami/pgbouncer/conf:rw
+      - ./compose/pgbouncer/userlist:/bitnami/pgbouncer/userlist:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 6432:6432
+    environment:
+      - POSTGRESQL_HOST=postgres
+      - POSTGRESQL_PASSWORD=banco-do-caralho
+    # healthcheck:
+    #   test:
+    #   start_period: 30s
+    #   interval: 1m30s
+    #   timeout: 30s
+    #   retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 384MB
+          cpus: "0.25"
+
+  postgres:  # 768MB / 0.4
     # Tive que fazer build da própia imagem para poder
     # adicionar a extensão "system_stats" no postgres
     # com finalidade de objter estatísticas no pgAdmin4
@@ -107,15 +134,22 @@ services:  # 1.5 CPUs e 3.0 GB RAM
     volumes:
       - ./compose/db/init:/docker-entrypoint-initdb.d:rw
       - ./compose/db/data:/var/lib/postgresql/data:rw
+
+      # Gerar o arquivo userlist.txt
+      - ./compose/pgbouncer:/pgbouncer:rw
     env_file:
       - ./compose/db/.env
     command: postgres -c log_min_messages=error -c max_connections=100 -c shared_buffers="256MB" -c work_mem="4MB" -c maintenance_work_mem="64MB" -c effective_cache_size="500MB"
-    expose:
-      - "5432"
     ports:
       - "5431:5432"
+    healthcheck:
+      test: pg_isready --dbname=rinha_de_backend --username=galo
+      start_period: 15s
+      interval: 3s
+      timeout: 2s
+      retries: 10
     deploy:
       resources:
         limits:
-          cpus: "0.45"
-          memory: "1.0GB"
+          memory: "768MB"
+          cpus: "0.4"

@@ -40,6 +40,7 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://dba.stackexchange.com/a/299047>
 - <https://copyprogramming.com/howto/postgres-full-text-search-on-array-column-with-index>
 - <https://www.enterprisedb.com/postgres-tutorials/how-tune-postgresql-memory>
+- <https://blog.4linux.com.br/conexoes-e-pool-postgresql>
 
 ### Gunicorn
 

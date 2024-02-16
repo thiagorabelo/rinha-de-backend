@@ -8,7 +8,10 @@ down:
 	docker compose down
 
 databases:
-	docker compose up redis postgres
+	docker compose up redis postgres pgbouncer
+
+build-app:
+	docker compose build app1
 
 psql:
 	# docker compose exec -u postgres postgres psql -U galo rinha_de_backend

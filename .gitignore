@@ -1,6 +1,7 @@
 .venv
 profiles
 compose/db/data
+compose/pgbouncer/userlist/userlist.txt
 *.pyc
 pessoas.csv
 *.log
