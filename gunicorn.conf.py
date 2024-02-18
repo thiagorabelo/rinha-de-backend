@@ -189,21 +189,22 @@ proc_name = None
 
 def post_fork(server, worker):
     output = sys.__stdout__
+    worker_str = f"Worker {worker.pid}"
 
     def patch_psycopg():
         from psycogreen.gevent import patch_psycopg as patch
         do_patch = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
         if do_patch:
             patch()
-            print(f">>> {worker}: Psycopg patched!", file=output)
+            print(f">>> {worker_str}: Psycopg patched!", file=output)
 
     def print_some_info():
         # print(f">>> {worker.__module__}", file=output)
         # print(f">>> {server.__module__}", file=output)
-        print(f">>> {worker}: {server.cfg.worker_class=}", file=output)
-        print(f">>> {worker}: {server.cfg.workers=}", file=output)
-        print(f">>> {worker}: {server.cfg.threads=}", file=output)
-        print(f">>> {worker}: {server.cfg.loglevel=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.worker_class=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.workers=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.threads=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.loglevel=}", file=output)
 
     server.log.info("Worker spawned (pid: %s)", worker.pid)
 

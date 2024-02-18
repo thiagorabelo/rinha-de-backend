@@ -38,8 +38,10 @@ x-app-environment-default: &app-environment-default
   DB_PASSWORD: "cocorico"
   DB_HOST: "pgbouncer"
   DB_PORT: 6432
+  # DB_HOST: "postgres"
+  # DB_PORT: 5432
   DB_USE_DB_GEVENTPOOL: 1  # Veja se => WORKER_CLASS: "gevent"
-  DB_CONN_MAX_AGE: 3  # DB_USE_DB_GEVENTPOOL=1 => DB_CONN_MAX_AGE=0
+  DB_CONN_MAX_AGE: 0  # DB_USE_DB_GEVENTPOOL=1 => DB_CONN_MAX_AGE=0
 
   CACHE_LOCATION: "redis://redis:6379/0"
 
@@ -144,7 +146,7 @@ services:  # 1.5 CPUs e 3.0 GB RAM
       - "5431:5432"
     healthcheck:
       test: pg_isready --dbname=rinha_de_backend --username=galo
-      start_period: 15s
+      start_period: 25s
       interval: 3s
       timeout: 2s
       retries: 10
