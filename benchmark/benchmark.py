@@ -3,9 +3,10 @@ import requests
 import statistics
 import tqdm
 
+from concurrent.futures import ThreadPoolExecutor
 from django.conf import settings
 from django.db import connections
-from itertools import count
+from itertools import count, zip_longest
 from functools import partial
 from time import perf_counter
 from urllib.parse import quote
@@ -53,6 +54,25 @@ class PostBenchmark:
             with open(result_id_file, "wt") as output:
                 return executor(self.invoke_request, items, partial(self.response_data_saver, output))
         return executor(self.invoke_request, items)
+
+
+class PPostBenchmark(PostBenchmark):
+
+    def invoke_request(self, endpoint_data):
+        endpoint, data = endpoint_data
+        return requests.post(endpoint, json=data)
+
+    def run(self, executor, batch, limit=None, result_id_file=None):
+        items = (
+            (self.endpoint, self._prepare_data(d))
+            for d in self._retrieve_data(limit=limit)
+        )
+        iters = (iter(items), ) * batch
+        batch_items = zip_longest(*iters, fillvalue=None)
+        if result_id_file:
+            with open(result_id_file, "wt") as output:
+                return executor(self.invoke_request, batch, list(batch_items), partial(self.response_data_saver, output))
+        return executor(self.invoke_request, batch, list(batch_items))
 
 
 class FindByTermBenchmark:
@@ -134,11 +154,27 @@ class RunBenchmark:
         print(f"Variance: {variance}")
         print(f"StdEv: {stdev}")
 
+    def _prun(self, request_maker, **kwargs):
+        mean, variance, stdev = request_maker.run(
+            self._pexecutor,
+            **kwargs
+        )
+
+        print(f"Mean: {mean} seconds")
+        print(f"Variance: {variance}")
+        print(f"StdEv: {stdev}")
+
     def post(self, json_path, limit=None, result_id_file=None):
         if not(limit is None) and limit < 2:
             raise ValueError("Limit must be at least 2")
         poster = PostBenchmark(self.url, json_path)
         self._run(poster, limit=limit, result_id_file=result_id_file)
+
+    def ppost(self, json_path, batch=10, limit=None, result_id_file=None):
+        if not(limit is None) and limit < 2:
+            raise ValueError("Limit must be at least 2")
+        poster = PPostBenchmark(self.url, json_path)
+        self._prun(poster, batch=batch, limit=limit, result_id_file=result_id_file)
 
     def find_by_term(self, term_resources_file, limit=None):
         if not(limit is None) and limit < 2:
@@ -168,6 +204,29 @@ class RunBenchmark:
                 callback(response)
 
             # print(f">>> {response.status_code=}")
+        return (
+            statistics.mean(times),
+            statistics.variance(times),
+            statistics.stdev(times),
+        )
+
+    def _pexecutor(self, request_invoker, batch, batch_items, callback=None):
+        times = []
+
+        for iterables in tqdm.tqdm(batch_items):  # , disable=True):
+
+            with ThreadPoolExecutor(max_workers=batch) as executor:
+                begin = perf_counter()
+                items = [item for item in iterables if item]
+                results = executor.map(request_invoker, items)
+            end = perf_counter()
+
+            times.append(end - begin)
+
+            if callback:
+                for result in results:
+                    callback(result)
+
         return (
             statistics.mean(times),
             statistics.variance(times),

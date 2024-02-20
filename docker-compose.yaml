@@ -26,6 +26,8 @@ x-rinha-de-backend-default: &rinha-de-backend-default
 x-app-environment-default: &app-environment-default
   WORKER_CLASS: "gevent"
   WORKERS: "2"
+  # Afeta somente se WORKER_CLASS="gthread"
+  # Se usado com WORKER_CLASS="sync", "gthread" será usado no lugar.
   THREADS: "2"  # N Workers * N Threads = N*N Total Workers
   # LOG_LEVEL: "info"
 
