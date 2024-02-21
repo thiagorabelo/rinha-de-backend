@@ -1,4 +1,6 @@
 
+build: build-app
+
 clean: clean-pg clean-redis
 
 up:

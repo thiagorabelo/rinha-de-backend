@@ -1,3 +1,5 @@
+import gevent
+
 from django.conf import settings
 from django.http import HttpResponse
 from django.db import IntegrityError
@@ -10,9 +12,13 @@ from .models import Pessoa
 from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
 from .schemas import PessoaSchema, CreatedResponseSchema, ErrorResponseSchema
+from .queue import insert_worker, insert_task
 
 
 api = NinjaAPI(title="Rinha de Backend")
+
+
+gevent.spawn(insert_worker)
 
 
 @api.post("/pessoas", response={201: CreatedResponseSchema, 422: ErrorResponseSchema})
@@ -23,10 +29,12 @@ def create_pessoa(request, payload: PessoaSchema, response: HttpResponse):
         return 422, {"message": "O apelido já existe"}
 
     try:
-        pessoa = Pessoa(**payload.dict())
-        pessoa.save()
+        pessoa_dict = payload.dict()
+        pessoa = Pessoa(**pessoa_dict)
+        # pessoa.save()
+        insert_task.put_nowait(pessoa.to_dict(pk=True))
         response.headers["Location"] = pessoa.get_absolute_url()
-        set_pessoa_dict_cache(pessoa.pk, payload.dict())
+        set_pessoa_dict_cache(pessoa.pk, pessoa_dict)
         return 201, {"message": "Criado"}
     except IntegrityError:
         return 422, {"message": "Unique violation"}
