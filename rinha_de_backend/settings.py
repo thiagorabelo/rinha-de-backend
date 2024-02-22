@@ -87,19 +87,37 @@ WSGI_APPLICATION = 'rinha_de_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+def _get_db_backend():
+    use_geventpool = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
+    if use_geventpool:
+        return "django_db_geventpool.backends.postgresql_psycopg2"
+    return "django.db.backends.postgresql"
+
+def _get_db_options():
+    use_geventpool = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
+    if use_geventpool:
+        return {
+            'MAX_CONNS': 23,
+            'REUSE_CONNS': 23
+        }
+    return {}
+
+def _get_db_conn_max_age():
+    use_geventpool = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
+    if use_geventpool:
+        return 0
+    return int(os.getenv("DB_CONN_MAX_AGE", 0))
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django_db_geventpool.backends.postgresql_psycopg2',
+        'ENGINE': _get_db_backend(),
         'NAME': os.environ["DB_NAME"],
         'USER': os.environ["DB_USER"],
         'PASSWORD': os.environ["DB_PASSWORD"],
         'HOST': os.environ["DB_HOST"],
         'PORT': os.getenv("DB_PORT", '5432'),
-        'CONN_MAX_AGE': 0,  # Para uso com django_db_geventpool, deve ser 0
-        'OPTIONS': {
-            'MAX_CONNS': 20,
-            'REUSE_CONNS': 10
-        }
+        'CONN_MAX_AGE': _get_db_conn_max_age(),  # Para uso com django_db_geventpool, deve ser 0
+        'OPTIONS': _get_db_options()
     }
 }
 

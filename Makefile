@@ -1,8 +1,19 @@
 
+build: build-app
+
 clean: clean-pg clean-redis
+
+up:
+	docker compose up
+
+down:
+	docker compose down
 
 databases:
 	docker compose up redis postgres
+
+build-app:
+	docker compose build app1
 
 psql:
 	# docker compose exec -u postgres postgres psql -U galo rinha_de_backend
@@ -10,9 +21,6 @@ psql:
 
 # psql:
 # 	docker compose exec postgres psql -U galo rinha_de_backend
-
-down:
-	docker compose down
 
 clean-pg:
 	docker compose exec -u postgres postgres psql -U galo -d rinha_de_backend -c "delete from pessoas_pessoa"

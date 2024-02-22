@@ -1,3 +1,5 @@
+import gevent
+
 from django.conf import settings
 from django.http import JsonResponse
 from django.db import IntegrityError
@@ -11,6 +13,11 @@ from .utils import get_body_as_json
 from .models import Pessoa
 from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
+
+from .queue import insert_worker, insert_task
+
+
+gevent.spawn(insert_worker)
 
 
 class PessoaView(View):
@@ -27,23 +34,25 @@ class PessoaView(View):
 
     # TODO: Muito lento. Talvez seja interessante usar uma
     #       coluna de texto normal apenas com um índice.
-    def _filter(self, request):
-        if t := request.GET.get('t'):
-            terms = t.split()
-            qs = Pessoa.search_terms(*terms, as_dict=True)[:50]
-            return JsonResponse(
-                data=[p for p in qs],
-                headers={"My-Host-Name": settings.MY_HOST_NAME},
-                safe=False
+    def _filter(self, request, t):
+        if not t:
+            return JsonResponseBadRequest(
+                data={"message": """Busca inválida (Informe o termo de busca "t")"""}
             )
-        return JsonResponseBadRequest(
-            data={"message": """Busca inválida (Informe o termo de busca "t")"""}
+
+        terms = t.split()
+        qs = Pessoa.search_terms(*terms, as_dict=True)[:50]
+        return JsonResponse(
+            data=list(qs),
+            headers={"My-Host-Name": settings.MY_HOST_NAME},
+            safe=False
         )
 
     def get(self, request: HttpRequest, pessoa_pk=0):
         if pessoa_pk:
             return self._get_one(request, pessoa_pk)
-        return self._filter(request)
+        t = request.GET.get('t')
+        return self._filter(request, t)
 
     def post(self, request: HttpRequest):
         try:
@@ -53,45 +62,33 @@ class PessoaView(View):
 
                 if has_pessoa_apelido_cached(pessoa):
                     return JsonResponseUnprocessableEntity(
-                        data={"message": "unique violation"},
-                        headers={
-                            "My-Host-Name": settings.MY_HOST_NAME
-                        }
+                        data={"message": "O apelido já existe"},
+                        headers={"My-Host-Name": settings.MY_HOST_NAME}
                     )
 
                 try:
-                    # bulk_insert_buffer.adicionar_pessoa(pessoa)
-                    pessoa = form.save()
+                    # pessoa = form.save()
+                    insert_task.put_nowait(pessoa.to_dict(pk=True))
+                    set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
+                    return JsonResponse(
+                        data={"message": "criado"},
+                        headers={"Location": pessoa.get_absolute_url(),
+                                 "My-Host-Name": settings.MY_HOST_NAME},
+                        status=201
+                    )
                 except IntegrityError:
                     return JsonResponseUnprocessableEntity(
-                        data={"message": "o apelido já existe"},
-                        headers={
-                            "My-Host-Name": settings.MY_HOST_NAME
-                        }
+                        data={"message": "unique violation"},
+                        headers={"My-Host-Name": settings.MY_HOST_NAME}
                     )
-                finally:
-                    set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
-
-                return JsonResponse(
-                    data={"message": "criado"},
-                    headers={
-                        "Location": pessoa.get_absolute_url(),
-                        "My-Host-Name": settings.MY_HOST_NAME
-                    },
-                    status=201
-                )
             return JsonResponseUnprocessableEntity(
                 data=form.errors,
-                headers={
-                    "My-Host-Name": settings.MY_HOST_NAME
-                }
+                headers={"My-Host-Name": settings.MY_HOST_NAME}
             )
         except AttributeError as ex:
             return JsonResponseBadRequest(
                 data={"message": str(ex)},
-                headers={
-                    "My-Host-Name": settings.MY_HOST_NAME
-                }
+                headers={"My-Host-Name": settings.MY_HOST_NAME}
             )
 
 

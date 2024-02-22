@@ -10,5 +10,5 @@ class PessoaForm(forms.ModelForm):
 
     # Desabilitando validação de unicidade
     def clean(self):
-        self._validate_unique = True
+        self._validate_unique = False
         return self.cleaned_data
