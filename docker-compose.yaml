@@ -25,7 +25,7 @@ x-rinha-de-backend-default: &rinha-de-backend-default
 
 x-app-environment-default: &app-environment-default
   WORKER_CLASS: "gevent"
-  WORKERS: "2"
+  WORKERS: "6"
   # Afeta somente se WORKER_CLASS="gthread"
   # Se usado com WORKER_CLASS="sync", "gthread" será usado no lugar.
   THREADS: "2"  # N Workers * N Threads = N*N Total Workers
@@ -43,6 +43,8 @@ x-app-environment-default: &app-environment-default
   DB_HOST: "postgres"
   DB_PORT: 5432
   DB_USE_DB_GEVENTPOOL: 1  # Veja se => WORKER_CLASS: "gevent"
+  DB_GEVENTPOOL_MAX_CONNS: 40
+  DB_GEVENTPOOL_REUSE_CONNS: 40
   DB_CONN_MAX_AGE: 0  # DB_USE_DB_GEVENTPOOL=1 => DB_CONN_MAX_AGE=0
 
   CACHE_LOCATION: "redis://redis:6379/0"
@@ -143,7 +145,12 @@ services:  # 1.5 CPUs e 3.0 GB RAM
       # - ./compose/pgbouncer:/pgbouncer:rw
     env_file:
       - ./compose/db/.env
-    command: postgres -c log_min_messages=error -c max_connections=100 -c shared_buffers="256MB" -c work_mem="4MB" -c maintenance_work_mem="64MB" -c effective_cache_size="500MB"
+    # max_connections = 400
+    # shared_buffers = 25% RAM
+    # work_mem = (25% RAM) / max_connections
+    # maintenance_work_mem = 5% RAM
+    # effective_cache_size = 50% RAM
+    command: postgres -c log_min_messages=error -c max_connections=400 -c shared_buffers="256MB" -c work_mem="4MB" -c maintenance_work_mem="48MB" -c effective_cache_size="500MB"
     ports:
       - "5431:5432"
     healthcheck:

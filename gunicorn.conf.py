@@ -22,7 +22,13 @@ import os
 #
 
 # bind = '127.0.0.1:8000'
+# backlog = 8192
+# backlog = 7168
+# backlog = 6144
+# backlog = 5120
 backlog = 4096
+# backlog = 2048
+# backlog = 1024
 
 #
 # Worker processes
@@ -71,8 +77,8 @@ backlog = 4096
 workers = 1
 worker_class = 'sync'
 worker_connections = 1000
-max_requests = 2000
-max_requests_jitter = 170
+max_requests = 0  # 2000
+max_requests_jitter = 0  # 170
 timeout = 30
 keepalive = 2
 

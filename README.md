@@ -10,14 +10,16 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 
 ## Links
 
-### Django
+### Python ou Django
 
+- <https://github.com/iancambrea/rinha-python-sanic>
 - <https://medium.com/kami-people/profiling-in-django-9f4d403a394f>
 - <https://www.digitalocean.com/community/tutorials/how-to-set-up-an-asgi-django-app-with-postgres-nginx-and-uvicorn-on-ubuntu-20-04>
 - <https://dev.to/pragativerma18/unlocking-performance-a-guide-to-async-support-in-django-2jdj>
 - <https://copyprogramming.com/howto/what-is-a-good-value-for-conn-max-age-in-django>
 - <https://dev.to/stefanukena/scaling-django-postgres-with-pgbouncer-on-heroku-1lb5>
 - <https://docs.djangoproject.com/en/4.2/topics/db/optimization>
+- <https://www.enterprisedb.com/postgres-tutorials/why-you-should-use-connection-pooling-when-setting-maxconnections-postgres>
 
 ### Asyncio
 

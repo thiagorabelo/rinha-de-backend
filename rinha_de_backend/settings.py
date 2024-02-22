@@ -97,8 +97,8 @@ def _get_db_options():
     use_geventpool = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
     if use_geventpool:
         return {
-            'MAX_CONNS': 23,
-            'REUSE_CONNS': 23
+            'MAX_CONNS': int(os.getenv("DB_GEVENTPOOL_MAX_CONNS", "23")),
+            'REUSE_CONNS': int(os.getenv("DB_GEVENTPOOL_REUSE_CONNS", "23")),
         }
     return {}
 
