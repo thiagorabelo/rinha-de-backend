@@ -22,13 +22,7 @@ import os
 #
 
 # bind = '127.0.0.1:8000'
-# backlog = 8192
-# backlog = 7168
-# backlog = 6144
-# backlog = 5120
-backlog = 4096
-# backlog = 2048
-# backlog = 1024
+backlog = 2048
 
 #
 # Worker processes
@@ -209,8 +203,10 @@ def post_fork(server, worker):
     def print_some_info():
         # print(f">>> {worker.__module__}", file=output)
         # print(f">>> {server.__module__}", file=output)
+        print(f">>> {worker_str}: {server.cfg.backlog=}", file=output)
         print(f">>> {worker_str}: {server.cfg.worker_class=}", file=output)
         print(f">>> {worker_str}: {server.cfg.workers=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.worker_connections=}", file=output)
         print(f">>> {worker_str}: {server.cfg.threads=}", file=output)
         print(f">>> {worker_str}: {server.cfg.loglevel=}", file=output)
 

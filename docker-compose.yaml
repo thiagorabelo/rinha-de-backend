@@ -24,11 +24,13 @@ x-rinha-de-backend-default: &rinha-de-backend-default
 
 
 x-app-environment-default: &app-environment-default
+  BACKLOG: "5120"
   WORKER_CLASS: "gevent"
-  WORKERS: "6"
+  WORKERS: "2"
+  WORKER_CONNECTIONS: "2500"
   # Afeta somente se WORKER_CLASS="gthread"
   # Se usado com WORKER_CLASS="sync", "gthread" será usado no lugar.
-  THREADS: "2"  # N Workers * N Threads = N*N Total Workers
+  THREADS: "0"  # N Workers * N Threads = N*N Total Workers
   # LOG_LEVEL: "info"
 
   SECRET_KEY: "j#d)x3j5-yw3&j!7wh@*c&fi1b9-j%t5w$=c=!m^ts_w$)l1l!"
@@ -43,8 +45,8 @@ x-app-environment-default: &app-environment-default
   DB_HOST: "postgres"
   DB_PORT: 5432
   DB_USE_DB_GEVENTPOOL: 1  # Veja se => WORKER_CLASS: "gevent"
-  DB_GEVENTPOOL_MAX_CONNS: 40
-  DB_GEVENTPOOL_REUSE_CONNS: 40
+  DB_GEVENTPOOL_MAX_CONNS: 60
+  DB_GEVENTPOOL_REUSE_CONNS: 60
   DB_CONN_MAX_AGE: 0  # DB_USE_DB_GEVENTPOOL=1 => DB_CONN_MAX_AGE=0
 
   CACHE_LOCATION: "redis://redis:6379/0"

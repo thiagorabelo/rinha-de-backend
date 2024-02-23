@@ -61,3 +61,4 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://upcloud.com/resources/tutorials/configure-load-balancing-nginx>
 - <https://www.digitalocean.com/community/tutorials/understanding-nginx-server-and-location-block-selection-algorithms>
 - <https://www.digitalocean.com/community/tutorials/understanding-nginx-http-proxying-load-balancing-buffering-and-caching>
+- <https://www.nginx.com/blog/avoiding-top-10-nginx-configuration-mistakes/#insufficient-fds>
