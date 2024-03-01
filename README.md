@@ -53,6 +53,12 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://dev.to/lsena/gunicorn-worker-types-how-to-choose-the-right-one-4n2c>
 - <https://github.com/benoitc/gunicorn/issues/2183>
 
+### uWSGI
+
+- <https://uwsgi-docs.readthedocs.io/en/latest/Gevent.html>
+- <https://uwsgi-docs.readthedocs.io>
+- <https://iximiuz.com/en/posts/flask-gevent-tutorial/>
+
 ### Nginx
 
 - <https://nginx.org/en/docs/ngx_core_module.html>
