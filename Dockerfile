@@ -4,7 +4,8 @@ FROM python:${PYTHON_TAG}
 
 RUN addgroup galo && adduser -S -G galo -g "App Runner" galo \
     && mkdir -p /app \
-    && chown galo:galo -R /app
+    && chown galo:galo -R /app \
+    && apk add build-base linux-headers
 
 COPY requirements.txt ./
 
@@ -17,4 +18,4 @@ WORKDIR /app
 
 USER galo
 
-CMD /app/start_gunicorn.sh
+CMD /app/start_uwsgi.sh

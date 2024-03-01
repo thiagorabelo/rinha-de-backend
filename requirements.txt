@@ -47,8 +47,7 @@ tqdm==4.66.1
 traitlets==5.11.2
 typing_extensions==4.9.0
 urllib3==2.1.0
-uvicorn==0.25.0
-uvloop==0.19.0
+uWSGI==2.0.24
 wcwidth==0.2.8
 zope.event==5.0
 zope.interface==6.1

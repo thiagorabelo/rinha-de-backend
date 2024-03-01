@@ -25,10 +25,10 @@ x-rinha-de-backend-default: &rinha-de-backend-default
 
 x-app-environment-default: &app-environment-default
   # https://serverfault.com/a/1077565
-  BACKLOG: "10240"
+  BACKLOG: "4000"
   WORKER_CLASS: "gevent"
   WORKERS: "2"
-  WORKER_CONNECTIONS: "1000"
+  WORKER_CONNECTIONS: "1100"
   # Afeta somente se WORKER_CLASS="gthread"
   # Se usado com WORKER_CLASS="sync", "gthread" será usado no lugar.
   THREADS: "0"  # N Workers * N Threads = N*N Total Workers
@@ -46,8 +46,8 @@ x-app-environment-default: &app-environment-default
   DB_HOST: "postgres"
   DB_PORT: 5432
   DB_USE_DB_GEVENTPOOL: 1  # Veja se => WORKER_CLASS: "gevent"
-  DB_GEVENTPOOL_MAX_CONNS: "50"
-  DB_GEVENTPOOL_REUSE_CONNS: "50"
+  DB_GEVENTPOOL_MAX_CONNS: "30"
+  DB_GEVENTPOOL_REUSE_CONNS: "30"
   DB_CONN_MAX_AGE: 0  # DB_USE_DB_GEVENTPOOL=1 => DB_CONN_MAX_AGE=0
 
   CACHE_LOCATION: "redis://redis:6379/0"
