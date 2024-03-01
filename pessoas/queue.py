@@ -15,9 +15,13 @@ values ( %(id)s, %(apelido)s, %(nome)s, %(nascimento)s, %(stack)s )
 """.strip()
 
 
+INSERT_BUFFER_SIZE = 200
+QUEUE_GET_TIMEOUT = 1
+
+
 # Solução inspirada (tá mais pra copiada) de https://github.com/iancambrea/rinha-python-sanic em:
 # https://github.com/iancambrea/rinha-python-sanic/blob/9b41ac9ecb991017dd9631e35076f32c543f1524/app/main.py
-def insert_worker(buffer_size=100, queue_get_timeout=1):
+def insert_worker(buffer_size=INSERT_BUFFER_SIZE, queue_get_timeout=QUEUE_GET_TIMEOUT):
     while True:
         buffer = []
 

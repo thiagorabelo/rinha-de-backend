@@ -1,5 +1,6 @@
 import codecs
 import json
+import sys
 
 from django.conf import settings
 
@@ -16,3 +17,12 @@ def get_body_as_json(request):
         else:
             request._json_cache = None
     return request._json_cache
+
+
+_outfile = sys.__stderr__
+
+
+def Print(*args, file=None, **kwargs):
+    if file is None:
+       file = _outfile
+    print(*args, file=file, **kwargs)

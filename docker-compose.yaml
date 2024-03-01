@@ -24,10 +24,11 @@ x-rinha-de-backend-default: &rinha-de-backend-default
 
 
 x-app-environment-default: &app-environment-default
-  BACKLOG: "5120"
+  # https://serverfault.com/a/1077565
+  BACKLOG: "10240"
   WORKER_CLASS: "gevent"
   WORKERS: "2"
-  WORKER_CONNECTIONS: "2500"
+  WORKER_CONNECTIONS: "1000"
   # Afeta somente se WORKER_CLASS="gthread"
   # Se usado com WORKER_CLASS="sync", "gthread" será usado no lugar.
   THREADS: "0"  # N Workers * N Threads = N*N Total Workers
@@ -45,8 +46,8 @@ x-app-environment-default: &app-environment-default
   DB_HOST: "postgres"
   DB_PORT: 5432
   DB_USE_DB_GEVENTPOOL: 1  # Veja se => WORKER_CLASS: "gevent"
-  DB_GEVENTPOOL_MAX_CONNS: 60
-  DB_GEVENTPOOL_REUSE_CONNS: 60
+  DB_GEVENTPOOL_MAX_CONNS: "50"
+  DB_GEVENTPOOL_REUSE_CONNS: "50"
   DB_CONN_MAX_AGE: 0  # DB_USE_DB_GEVENTPOOL=1 => DB_CONN_MAX_AGE=0
 
   CACHE_LOCATION: "redis://redis:6379/0"
@@ -147,12 +148,18 @@ services:  # 1.5 CPUs e 3.0 GB RAM
       # - ./compose/pgbouncer:/pgbouncer:rw
     env_file:
       - ./compose/db/.env
-    # max_connections = 400
-    # shared_buffers = 25% RAM
-    # work_mem = (25% RAM) / max_connections
-    # maintenance_work_mem = 5% RAM
-    # effective_cache_size = 50% RAM
-    command: postgres -c log_min_messages=error -c max_connections=400 -c shared_buffers="256MB" -c work_mem="4MB" -c maintenance_work_mem="48MB" -c effective_cache_size="500MB"
+    # max_connections       200
+    # shared_buffers        25% RAM                      Cached Data
+    # work_mem              (25% RAM) / max_connections  Internal sort operations and hash tables
+    #                                                    (used for order by, distinct, and merge
+    #                                                    join operations)
+    # maintenance_work_mem  5% RAM                       Memory to maintenance operations like
+    #                                                    vacuum, create index, alter table add
+    #                                                    foreign key operations
+    # effective_cache_size  50% RAM                      Estimates memory available for disk
+    #                                                    caching by the OS and within the
+    #                                                    database itself
+    command: postgres -c log_min_messages=fatal -c max_connections=400 -c shared_buffers="384MB" -c work_mem="5MB" -c maintenance_work_mem="48MB" -c effective_cache_size="500MB"
     ports:
       - "5431:5432"
     healthcheck:

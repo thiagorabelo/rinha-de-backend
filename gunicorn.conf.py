@@ -209,6 +209,8 @@ def post_fork(server, worker):
         print(f">>> {worker_str}: {server.cfg.worker_connections=}", file=output)
         print(f">>> {worker_str}: {server.cfg.threads=}", file=output)
         print(f">>> {worker_str}: {server.cfg.loglevel=}", file=output)
+        print(f">>> {worker_str}: {os.getenv("DB_GEVENTPOOL_MAX_CONNS")=}")
+        print(f">>> {worker_str}: {os.getenv("DB_GEVENTPOOL_REUSE_CONNS")=}")
 
     server.log.info("Worker spawned (pid: %s)", worker.pid)
 

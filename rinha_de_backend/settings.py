@@ -20,6 +20,12 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=".env.local")
 
 
+try:
+    MY_HOST_NAME = socket.gethostname()
+except Exception as ex:
+    MY_HOST_NAME = 'Unknow'
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -117,7 +123,9 @@ DATABASES = {
         'HOST': os.environ["DB_HOST"],
         'PORT': os.getenv("DB_PORT", '5432'),
         'CONN_MAX_AGE': _get_db_conn_max_age(),  # Para uso com django_db_geventpool, deve ser 0
-        'OPTIONS': _get_db_options()
+        'OPTIONS': {
+            "application_name": f"Rinha de Backend [{MY_HOST_NAME}/{os.getpid()}]",
+        } | _get_db_options()
     }
 }
 
@@ -176,8 +184,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 APPEND_SLASH = False
-
-try:
-    MY_HOST_NAME = socket.gethostname()
-except Exception as ex:
-    MY_HOST_NAME = 'Unknow'
