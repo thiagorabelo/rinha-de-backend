@@ -27,7 +27,7 @@ x-app-environment-default: &app-environment-default
   # GEVENT_LOOP: "libev-cext"
   # GEVENT_LOOP: "libev-cffi"
   # GEVENT_LOOP: "libuv-cffi"
-  GEVENT_LOOP: "libuv"
+  # GEVENT_LOOP: "libuv"
 
   # https://serverfault.com/a/1077565
   BACKLOG: "4000"
