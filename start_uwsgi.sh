@@ -11,7 +11,7 @@ if [ -z "${BIND_HTTP}" ]; then
     BIND_EXTRA="--chmod-socket=666"
 else
     BIND="--http-socket ${BIND_HTTP}"
-    BIND_EXTRA="--chmod-socket=666"
+    BIND_EXTRA=""
 fi
 
 if [[ "${MIGRATE}" == "1" ]]; then
@@ -20,14 +20,14 @@ fi
 
 exec uwsgi \
     --module "rinha_de_backend.wsgi_patched:application" \
-    ${BIND} \
-    ${BIND_EXTRA} \
+    ${BIND} ${BIND_EXTRA} \
     --master \
+    --single-interpreter \
     --listen "${BACKLOG}" \
     --workers "${WORKERS}" \
     --gevent "${WORKER_CONNECTIONS}" \
     --gevent-monkey-patch \
     --gevent-early-monkey-patch \
-    --procname-prefix "Rinha de Backend - Python | " \
+    --procname-prefix "Rinha de Backend | " \
     --disable-logging \
     --die-on-term

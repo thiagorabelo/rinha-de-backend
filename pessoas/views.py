@@ -100,3 +100,15 @@ def contagem_pessoas(request):
         headers={"My-Host-Name": settings.MY_HOST_NAME},
         status=200
     )
+
+        
+def gevent_loop(request):
+    import gevent
+    loop = gevent.config.loop
+
+    return HttpResponse(
+        content=f"{loop.__module__}.{loop.__name__}".encode("utf-8"),
+        content_type="text/plain",
+        headers={"My-Host-Name": settings.MY_HOST_NAME},
+        status=200
+    )

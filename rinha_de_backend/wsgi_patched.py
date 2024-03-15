@@ -23,6 +23,9 @@ def _has_gevent_patched():
         gevent.monkey.patch_all()
         print(socket.socket == gevent.socket.socket)
 
+    import gevent
+    print(f">>> {gevent.config.loop}")
+
 
 _has_gevent_patched()
 _do_patch_psycopg2()

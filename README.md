@@ -58,6 +58,7 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://uwsgi-docs.readthedocs.io/en/latest/Gevent.html>
 - <https://uwsgi-docs.readthedocs.io>
 - <https://iximiuz.com/en/posts/flask-gevent-tutorial/>
+- <https://www.bloomberg.com/company/stories/configuring-uwsgi-production-deployment>
 
 ### Nginx
 
