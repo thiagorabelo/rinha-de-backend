@@ -14,10 +14,10 @@ from .models import Pessoa
 from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
 
-from .queue import insert_worker, insert_task
+# from .queue import insert_worker, insert_task
 
 
-gevent.spawn(insert_worker)
+# gevent.spawn(insert_worker)
 
 
 class PessoaView(View):
@@ -67,8 +67,8 @@ class PessoaView(View):
                     )
 
                 try:
-                    # pessoa = form.save()
-                    insert_task.put_nowait(pessoa.to_dict(pk=True))
+                    pessoa = form.save()
+                    # insert_task.put_nowait(pessoa.to_dict(pk=True))
                     set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
                     return JsonResponse(
                         data={"message": "criado"},
@@ -101,7 +101,7 @@ def contagem_pessoas(request):
         status=200
     )
 
-        
+
 def gevent_loop(request):
     import gevent
     loop = gevent.config.loop
