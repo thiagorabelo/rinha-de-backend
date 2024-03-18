@@ -74,17 +74,21 @@ class Pessoa(models.Model):
     #     self.search_field = ",".join(itens)
     #     return super().save(*args, **kwargs)
 
-    def to_dict(self):
+    def to_dict(self, pk=False):
         if isinstance(self.nascimento, str):
             nascimento = datetime.strptime(self.nascimento, "%Y-%m-%d").date()
         else:
             nascimento = self.nascimento
-        return {
+        p_dict = {
             "apelido": self.apelido,
             "nome": self.nome,
             "nascimento": nascimento.isoformat(),
             "stack": self.stack,
         }
+
+        if pk:
+            return {'id': self.id} | p_dict
+        return p_dict
 
     def to_json(self):
         return json.dumps(self.to_dict())

@@ -7,4 +7,5 @@
         "**/.DS_Store": true,
         "**/.directory": true
     },
+    "python.envFile": ""
 }

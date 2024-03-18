@@ -20,6 +20,12 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=".env.local")
 
 
+try:
+    MY_HOST_NAME = socket.gethostname()
+except Exception as ex:
+    MY_HOST_NAME = 'Unknow'
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -95,7 +101,6 @@ DATABASES = {
         'PASSWORD': os.environ["DB_PASSWORD"],
         'HOST': os.environ["DB_HOST"],
         'PORT': os.getenv("DB_PORT", '5432'),
-        'CONN_MAX_AGE': 0 if DEBUG else 0 if (max_age := os.getenv("DB_CONN_MAX_AGE", "0")) == "0" else int(max_age)
     }
 }
 
@@ -154,8 +159,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 APPEND_SLASH = False
-
-try:
-    MY_HOST_NAME = socket.gethostname()
-except Exception as ex:
-    MY_HOST_NAME = 'Unknow'
