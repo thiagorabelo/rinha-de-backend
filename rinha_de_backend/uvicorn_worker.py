@@ -2,6 +2,7 @@ from uvicorn.workers import UvicornWorker
 
 
 class CustomUvicornWorker(UvicornWorker):
+    # TODO: REVER ESSES VALORES
     CONFIG_KWARGS = {"loop": "uvloop",
                      "http": "h11",
                      "lifespan": "auto",
