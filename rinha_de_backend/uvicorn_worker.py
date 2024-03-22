@@ -1,3 +1,5 @@
+import os
+
 from uvicorn.workers import UvicornWorker
 
 
@@ -6,7 +8,7 @@ class CustomUvicornWorker(UvicornWorker):
     CONFIG_KWARGS = {"loop": "uvloop",
                      "http": "h11",
                      "lifespan": "auto",
-                     "limit_concurrency": 2048,
-                     "limit_max_requests": 20000,
-                     "backlog": 4096,
-                     "access_log": False}
+                     "limit_concurrency": int(os.getenv("WORKER_CONNECTIONS", "4096")),
+                     "limit_max_requests": int(os.getenv("MAX_REQUESTS", "100000")),
+                     "backlog": int(os.getenv("BACKLOG", "10240")),
+                     "access_log": bool(int(os.getenv("ACCESS_LO", "0")))}

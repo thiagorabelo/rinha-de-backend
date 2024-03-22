@@ -1,13 +1,12 @@
 import asyncio
-import codecs
 import json
-import types
 
 from asgiref.sync import sync_to_async
 from concurrent.futures import ThreadPoolExecutor
-from django.conf import settings
+from django.http import HttpRequest
 from django.db import connection
 from functools import wraps
+from typing import Any
 
 
 from .models import Pessoa
@@ -82,15 +81,13 @@ class BulkInsertBuffer:
                 self.task.cancel()
 
 
-def get_body_as_json(request):
+def get_body_as_json(request: HttpRequest) -> dict[str, Any] | None:
     """
-    Adiciona o método request.json() ao objeto request
+    Converte o corpo da requisição do formato JSON para um dicionário
     """
     if not hasattr(request, "_json_cache"):
         if request.META.get("CONTENT_TYPE") == "application/json":
-            encoding = settings.DEFAULT_CHARSET
-            stream = codecs.getreader(encoding)(request)
-            request._json_cache = json.load(stream)
+            request._json_cache = json.loads(request.read())
         else:
             request._json_cache = None
     return request._json_cache

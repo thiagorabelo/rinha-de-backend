@@ -6,11 +6,19 @@ from asgiref.sync import sync_to_async
 from functools import reduce
 
 from datetime import datetime
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Cast
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField as DjArrayField
 from django.contrib.postgres.search import SearchVectorField, SearchQuery
 from django.contrib.postgres.indexes import GinIndex, GistIndex
+
+
+class ArrayField(DjArrayField):
+    def validate(self, value, model_instance):
+        if not isinstance(value, (list, tuple, set)):
+            raise ValidationError(f"{self.attname} must be list, tuple or set")
+        return super().validate(value, model_instance)
 
 
 class Pessoa(models.Model):
@@ -21,9 +29,8 @@ class Pessoa(models.Model):
     stack = ArrayField(
         models.CharField(max_length=32, blank=False),
         verbose_name="Stack",
-        null=True,
-        blank=True,
-        default=list,
+        null=False,
+        blank=False,
     )
 
     # create extension btree_gin;

@@ -1,5 +1,7 @@
 # Sample Gunicorn configuration file.
 
+import os
+
 #
 # Server socket
 #
@@ -187,6 +189,18 @@ proc_name = None
 #
 
 def post_fork(server, worker):
+    import sys
+
+    output = sys.__stderr__
+    worker_str = f"Worker {worker.pid}"
+
+    print(f">>> {worker_str}: {server.cfg.backlog=}", file=output)
+    print(f">>> {worker_str}: {server.cfg.worker_class=}", file=output)
+    print(f">>> {worker_str}: {server.cfg.workers=}", file=output)
+    print(f">>> {worker_str}: {server.cfg.worker_connections=}", file=output)
+    print(f">>> {worker_str}: {server.cfg.threads=}", file=output)
+    print(f">>> {worker_str}: {server.cfg.loglevel=}", file=output)
+
     server.log.info("Worker spawned (pid: %s)", worker.pid)
 
 def pre_fork(server, worker):

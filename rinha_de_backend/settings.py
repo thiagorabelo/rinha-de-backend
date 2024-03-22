@@ -95,12 +95,20 @@ WSGI_APPLICATION = 'rinha_de_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        # Versão de desenvolvimento > 5
+        'ENGINE': 'rinha_de_backend.db.backends.postgresql',
+
         'NAME': os.environ["DB_NAME"],
         'USER': os.environ["DB_USER"],
         'PASSWORD': os.environ["DB_PASSWORD"],
         'HOST': os.environ["DB_HOST"],
         'PORT': os.getenv("DB_PORT", '5432'),
+
+        # Versão de desenvolvimento > 5
+        # https://docs.djangoproject.com/en/dev/ref/databases/#connection-pool
+        "OPTIONS": {
+            "pool": True,
+        },
     }
 }
 

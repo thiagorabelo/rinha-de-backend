@@ -1,8 +1,6 @@
 import pickle
 import redis.asyncio as redis
 
-from django.conf import settings
-
 
 def _create_pool_factory(host=None, port=None, db=None, url=None):
     if url:
@@ -42,6 +40,3 @@ class SimpleCache:
         for k, v in d.items():
             pipe.set(k, pickle.dumps(v))
         return await pipe.execute()
-
-
-cache = SimpleCache(url=settings.CACHES["default"]["LOCATION"])

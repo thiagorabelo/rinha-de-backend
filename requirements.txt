@@ -12,6 +12,7 @@ Faker==24.2.1
 gunicorn==21.2.0
 h11==0.14.0
 hiredis==2.3.2
+httptools==0.6.1
 idna==3.6
 ipython==8.22.2
 jedi==0.19.1
@@ -19,13 +20,16 @@ matplotlib-inline==0.1.6
 packaging==24.0
 parso==0.8.3
 pexpect==4.9.0
+pipdeptree==2.16.1
 prompt-toolkit==3.0.43
 psycopg==3.1.18
 psycopg-binary==3.1.18
+psycopg-pool==3.2.1
 ptyprocess==0.7.0
 pure-eval==0.2.2
 Pygments==2.17.2
 python-dateutil==2.9.0.post0
+python-dotenv==1.0.1
 redis==5.0.3
 requests==2.31.0
 six==1.16.0

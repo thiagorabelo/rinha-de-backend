@@ -26,8 +26,8 @@ x-rinha-de-backend-default: &rinha-de-backend-default
 x-app-environment-default: &app-environment-default
     # https://serverfault.com/a/1077565
   BACKLOG: "10240"  # TODO: Passar esses parâmetros para o uvicorn
-  WORKERS: "1"
-  WORKER_CONNECTIONS: "2000"
+  WORKERS: "2"
+  WORKER_CONNECTIONS: "4096"
   # Afeta somente se WORKER_CLASS="gthread"
   # Se usado com WORKER_CLASS="sync", "gthread" será usado no lugar.
   THREADS: "0"  # N Workers * N Threads = N*N Total Workers
@@ -53,7 +53,7 @@ x-app-environment-default: &app-environment-default
 
 services:  # 1.5 CPUs e 3072MB RAM
 
-  nginx:  # 512MB / 0.15
+  nginx:  # 320MB / 0.15
     image: nginx:${NGINX_TAG}
     hostname: nginx
     restart: always
@@ -70,7 +70,7 @@ services:  # 1.5 CPUs e 3072MB RAM
     deploy:
       resources:
         limits:
-          memory: "512MB"
+          memory: "320MB"
           cpus: "0.15"
 
   app1:  # 512MB / 0.4
@@ -80,9 +80,6 @@ services:  # 1.5 CPUs e 3072MB RAM
       <<: *app-environment-default
       ALLOWED_HOSTS: "app1,localhost,127.0.0.1,0.0.0.0"
       MIGRATE: "1"
-    depends_on:
-      - postgres
-      - app0
 
   app2:  # 512MB / 0.4
     <<: *rinha-de-backend-default
@@ -90,11 +87,8 @@ services:  # 1.5 CPUs e 3072MB RAM
     environment:
       <<: *app-environment-default
       ALLOWED_HOSTS: "app2,localhost,127.0.0.1,0.0.0.0"
-    depends_on:
-      - postgres
-      - app0
 
-  redis:  # 512MB / 0.1
+  redis:  # 320MB / 0.1
     image: redis:7.2.4-alpine
     hostname: redis
     command: redis-server --save "" --appendonly no --maxclients 20000
@@ -131,7 +125,7 @@ services:  # 1.5 CPUs e 3072MB RAM
   #         memory: 384MB
   #         cpus: "0.25"
 
-  postgres:  # 1024MB / 0.45
+  postgres:  # 1408MB / 0.45
     # Tive que fazer build da própia imagem para poder
     # adicionar a extensão "system_stats" no postgres
     # com finalidade de objter estatísticas no pgAdmin4
@@ -161,7 +155,8 @@ services:  # 1.5 CPUs e 3072MB RAM
     # effective_cache_size  50% RAM                      Estimates memory available for disk
     #                                                    caching by the OS and within the
     #                                                    database itself
-    command: postgres -c log_min_messages=fatal -c max_connections=400 -c shared_buffers="384MB" -c work_mem="5MB" -c maintenance_work_mem="48MB" -c effective_cache_size="500MB"
+    # command: postgres -c log_min_messages=fatal -c max_connections=500 -c shared_buffers="384MB" -c work_mem="5MB" -c maintenance_work_mem="48MB" -c effective_cache_size="500MB" -c superuser_reserved_connections=3
+    command: postgres -c log_min_messages=fatal -c max_connections=500 -c shared_buffers="512MB" -c work_mem="5MB" -c maintenance_work_mem="70MB" -c effective_cache_size="704MB" -c superuser_reserved_connections=3
     ports:
       - "5431:5432"
     healthcheck:
@@ -173,5 +168,5 @@ services:  # 1.5 CPUs e 3072MB RAM
     deploy:
       resources:
         limits:
-          memory: "1024MB"
+          memory: "1408MB"
           cpus: "0.45"
