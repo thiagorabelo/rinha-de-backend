@@ -1,4 +1,5 @@
 import gevent
+import uuid
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -14,82 +15,87 @@ from .models import Pessoa
 from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
 
-# from .queue import insert_worker, insert_task
+from .queue import insert_worker, insert_task
 
 
-# gevent.spawn(insert_worker)
+gevent.spawn(insert_worker)
 
 
-class PessoaView(View):
+def _pessoa_create(request: HttpRequest) -> HttpResponse:
+    try:
+        form = PessoaForm(data=get_body_as_json(request))
+        if form.is_valid():
+            pessoa = form.instance
 
-    def _get_one(self, request, pk):
-        try:
-            pessoa_dict = get_pessoa_dict_by_cache_or_db(pk)
-            return JsonResponse(
-                data=pessoa_dict,
-                headers={"My-Host-Name": settings.MY_HOST_NAME}
-            )
-        except Pessoa.DoesNotExist:
-            return JsonResponseNotFound(data={"message": "Pessoa não encontrada"})
+            if has_pessoa_apelido_cached(pessoa):
+                return JsonResponseUnprocessableEntity(
+                    data={"message": "O apelido já existe"},
+                    headers={"My-Host-Name": settings.MY_HOST_NAME}
+                )
 
-    # TODO: Muito lento. Talvez seja interessante usar uma
-    #       coluna de texto normal apenas com um índice.
-    def _filter(self, request, t):
-        if not t:
-            return JsonResponseBadRequest(
-                data={"message": """Busca inválida (Informe o termo de busca "t")"""}
-            )
-
-        terms = t.split()
-        qs = Pessoa.search_terms(*terms, as_dict=True)[:50]
-        return JsonResponse(
-            data=list(qs),
-            headers={"My-Host-Name": settings.MY_HOST_NAME},
-            safe=False
+            try:
+                # pessoa = form.save()
+                # insert_task.put(pessoa.to_dict(pk=True), block=True)
+                insert_task.put_nowait(pessoa.to_dict(pk=True))
+                set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
+                return JsonResponse(
+                    data={"message": "criado"},
+                    headers={"Location": pessoa.get_absolute_url(),
+                             "My-Host-Name": settings.MY_HOST_NAME},
+                    status=201
+                )
+            except IntegrityError:
+                return JsonResponseUnprocessableEntity(
+                    data={"message": "unique violation"},
+                    headers={"My-Host-Name": settings.MY_HOST_NAME}
+                )
+        return JsonResponseUnprocessableEntity(
+            data=form.errors,
+            headers={"My-Host-Name": settings.MY_HOST_NAME}
+        )
+    except AttributeError as ex:
+        return JsonResponseBadRequest(
+            data={"message": str(ex)},
+            headers={"My-Host-Name": settings.MY_HOST_NAME}
         )
 
-    def get(self, request: HttpRequest, pessoa_pk=0):
-        if pessoa_pk:
-            return self._get_one(request, pessoa_pk)
-        t = request.GET.get('t')
-        return self._filter(request, t)
 
-    def post(self, request: HttpRequest):
-        try:
-            form = PessoaForm(data=get_body_as_json(request))
-            if form.is_valid():
-                pessoa = form.instance
+def _pessoa_list(request: HttpRequest) -> HttpResponse:
+    term = request.GET.get("t")
+    if not term:
+        return JsonResponseBadRequest(
+            data={"message": """Busca inválida (Informe o termo de busca "t")"""}
+        )
 
-                if has_pessoa_apelido_cached(pessoa):
-                    return JsonResponseUnprocessableEntity(
-                        data={"message": "O apelido já existe"},
-                        headers={"My-Host-Name": settings.MY_HOST_NAME}
-                    )
+    terms = term.split()
+    qs = Pessoa.search_terms(*terms, as_dict=True)[:50]
+    return JsonResponse(
+        data=list(qs),
+        headers={"My-Host-Name": settings.MY_HOST_NAME},
+        safe=False
+    )
 
-                try:
-                    pessoa = form.save()
-                    # insert_task.put_nowait(pessoa.to_dict(pk=True))
-                    set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
-                    return JsonResponse(
-                        data={"message": "criado"},
-                        headers={"Location": pessoa.get_absolute_url(),
-                                 "My-Host-Name": settings.MY_HOST_NAME},
-                        status=201
-                    )
-                except IntegrityError:
-                    return JsonResponseUnprocessableEntity(
-                        data={"message": "unique violation"},
-                        headers={"My-Host-Name": settings.MY_HOST_NAME}
-                    )
-            return JsonResponseUnprocessableEntity(
-                data=form.errors,
-                headers={"My-Host-Name": settings.MY_HOST_NAME}
-            )
-        except AttributeError as ex:
-            return JsonResponseBadRequest(
-                data={"message": str(ex)},
-                headers={"My-Host-Name": settings.MY_HOST_NAME}
-            )
+
+def pessoa_create_or_list(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        return _pessoa_create(request)
+    elif request.method == "GET":
+        return _pessoa_list(request)
+    return JsonResponse(
+        content={"message": "Not Allowed"},
+        status=405,
+    )
+
+
+def pessoa_get(request: HttpRequest, pk: uuid.UUID = None) -> HttpResponse:
+    try:
+        pessoa_dict = get_pessoa_dict_by_cache_or_db(pk)
+        return JsonResponse(
+            data=pessoa_dict,
+            headers={"My-Host-Name": settings.MY_HOST_NAME}
+        )
+    except Pessoa.DoesNotExist:
+        return JsonResponseNotFound(data={"message": "Pessoa não encontrada"})
 
 
 def contagem_pessoas(request):

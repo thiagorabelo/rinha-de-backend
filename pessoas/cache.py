@@ -1,7 +1,12 @@
-from django.core.cache import cache
-# from rinha_de_backend.redis_cache import cache
+# from django.core.cache import cache
 
+import os
+
+from rinha_de_backend.redis_cache import SimpleCache
 from .models import Pessoa
+
+
+cache = SimpleCache(url=os.environ["CACHE_LOCATION"])
 
 
 def _pessoa_id_key(id):
