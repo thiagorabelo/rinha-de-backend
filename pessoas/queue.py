@@ -39,7 +39,8 @@ def insert_worker(buffer_size=INSERT_BUFFER_SIZE, queue_get_timeout=QUEUE_GET_TI
 
 def insert_into_db(buffer):
     try:
-        with connection.cursor() as cursor:
+        with connection.cursor() as cursor_wrapper:
+            cursor = cursor_wrapper.cursor
             # logger.debug("Inserindo %d pessoas", len(buffer))
             cursor.executemany(_query, buffer)
     except Exception as ex:

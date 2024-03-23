@@ -1,17 +1,22 @@
-from datetime import date
-from typing import Annotated
-from pydantic import BaseModel, StringConstraints, Field, validator
+import uuid
+
+from pydantic import BaseModel, Field, field_validator, PastDate
+from typing import Annotated, ClassVar
 
 
 class PessoaSchema(BaseModel):
-    apelido: Annotated[str, StringConstraints(max_length=32)]
-    nome: Annotated[str, StringConstraints(max_length=100)]
-    nascimento: date
-    stack: list[str] = Field(str, min_length=1)
+    id: Annotated[uuid.UUID, Field(default_factory=uuid.uuid4)]
+    apelido: str = Field(max_length=32)
+    nome: str = Field(max_length=100)
+    nascimento: PastDate = Field()
 
-    @validator("stack")
-    def validate_stack(cls, vls):
-        err = [v for v in vls if len(v) > 32 or not v]
-        if err:
-            raise ValueError(f"Invalid values: {err}")
-        return vls
+    stack_item_max_length: ClassVar[int] = 32
+
+    stack: list[str] = Field(min_length=1)
+
+    @field_validator("stack", check_fields=False)
+    @classmethod
+    def check_items_stack_length(cls, stack: list[str]) -> list[str]:
+        if any(map(lambda i: len(i) > cls.stack_item_max_length, stack)):
+            raise ValueError(f"Stack item exceeds max length ({cls.stack_item_max_length})")
+        return stack

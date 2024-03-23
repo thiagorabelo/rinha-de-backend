@@ -32,8 +32,8 @@ x-app-environment-default: &app-environment-default
   # https://serverfault.com/a/1077565
   BACKLOG: "10240"
   WORKER_CLASS: "gevent"
-  WORKERS: "1"
-  WORKER_CONNECTIONS: "2000"
+  WORKERS: "2"
+  WORKER_CONNECTIONS: "200"
   # Afeta somente se WORKER_CLASS="gthread"
   # Se usado com WORKER_CLASS="sync", "gthread" será usado no lugar.
   THREADS: "0"  # N Workers * N Threads = N*N Total Workers

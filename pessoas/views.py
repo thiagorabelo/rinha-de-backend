@@ -1,21 +1,21 @@
 import gevent
+import logging
 import uuid
 
 from django.conf import settings
-from django.http import JsonResponse
-from django.db import IntegrityError
 from django.http import HttpResponse, HttpRequest
-from django.views import View
+from pydantic import ValidationError
 
-from .forms import PessoaForm
-from .http import JsonResponseBadRequest, JsonResponseNotFound, \
-                  JsonResponseUnprocessableEntity
+from .http import JsonResponse, JsonResponseUnprocessableEntity, \
+                  JsonResponseBadRequest, JsonResponseNotFound
 from .utils import get_body_as_json
 from .models import Pessoa
 from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
 
+from .models import Pessoa
 from .queue import insert_worker, insert_task
+from .schemas import PessoaSchema
 
 
 gevent.spawn(insert_worker)
@@ -23,37 +23,32 @@ gevent.spawn(insert_worker)
 
 def _pessoa_create(request: HttpRequest) -> HttpResponse:
     try:
-        form = PessoaForm(data=get_body_as_json(request))
-        if form.is_valid():
-            pessoa = form.instance
+        schema = PessoaSchema(**get_body_as_json(request))
 
-            if has_pessoa_apelido_cached(pessoa):
-                return JsonResponseUnprocessableEntity(
-                    data={"message": "O apelido já existe"},
-                    headers={"My-Host-Name": settings.MY_HOST_NAME}
-                )
+        if has_pessoa_apelido_cached(schema.apelido):
+            return JsonResponseUnprocessableEntity(
+                data={"message": "O apelido já existe"},
+                headers={"My-Host-Name": settings.MY_HOST_NAME}
+            )
 
-            try:
-                # pessoa = form.save()
-                # insert_task.put(pessoa.to_dict(pk=True), block=True)
-                insert_task.put_nowait(pessoa.to_dict(pk=True))
-                set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
-                return JsonResponse(
-                    data={"message": "criado"},
-                    headers={"Location": pessoa.get_absolute_url(),
-                             "My-Host-Name": settings.MY_HOST_NAME},
-                    status=201
-                )
-            except IntegrityError:
-                return JsonResponseUnprocessableEntity(
-                    data={"message": "unique violation"},
-                    headers={"My-Host-Name": settings.MY_HOST_NAME}
-                )
+        result = schema.model_dump()
+        # pessoa = form.save()
+        # insert_task.put(pessoa.to_dict(pk=True), block=True)
+        insert_task.put_nowait(result)
+        set_pessoa_dict_cache(schema.id, result)
+        return JsonResponse(
+            data={"message": "criado"},
+            headers={"Location": Pessoa.get_absolute_url(schema),  # Gambiarra, mas funciona!
+                     "My-Host-Name": settings.MY_HOST_NAME},
+            status=201
+        )
+    except ValidationError as ex:
         return JsonResponseUnprocessableEntity(
-            data=form.errors,
+            data=ex.json(),
             headers={"My-Host-Name": settings.MY_HOST_NAME}
         )
-    except AttributeError as ex:
+    except Exception as ex:
+        logging.error(ex)
         return JsonResponseBadRequest(
             data={"message": str(ex)},
             headers={"My-Host-Name": settings.MY_HOST_NAME}

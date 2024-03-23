@@ -1,5 +1,4 @@
-# import codecs
-import json
+import orjson as json
 import sys
 
 # from django.conf import settings
@@ -11,9 +10,6 @@ def get_body_as_json(request):
     """
     if not hasattr(request, "_json_cache"):
         if request.META.get("CONTENT_TYPE") == "application/json":
-            # encoding = settings.DEFAULT_CHARSET
-            # stream = codecs.getreader(encoding)(request)
-            # request._json_cache = json.load(stream)
             request._json_cache = json.loads(request.read())
         else:
             request._json_cache = None

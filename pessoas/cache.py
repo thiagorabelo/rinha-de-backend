@@ -25,8 +25,8 @@ def get_pessoa_dict_by_cache_or_db(pk):
     return pessoa_dict
 
 
-def has_pessoa_apelido_cached(pessoa):
-    return cache.has_key(_pessoa_apelido_key(pessoa.apelido))
+def has_pessoa_apelido_cached(apelido):
+    return cache.has_key(_pessoa_apelido_key(apelido))
 
 
 def set_pessoa_dict_cache(pk, pessoa_dict):
