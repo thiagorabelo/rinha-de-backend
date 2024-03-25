@@ -67,7 +67,6 @@ def _pessoa_list(request: HttpRequest) -> HttpResponse:
     return JsonResponse(
         data=list(qs),
         headers={"My-Host-Name": settings.MY_HOST_NAME},
-        safe=False
     )
 
 

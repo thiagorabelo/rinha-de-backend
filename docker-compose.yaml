@@ -50,6 +50,9 @@ x-app-environment-default: &app-environment-default
   # DB_PORT: 6432
   DB_HOST: "postgres"
   DB_PORT: 5432
+
+  # Caso DB_USE_DB_GEVENTPOOL=0, instalar os pacotes psycopg, psycopg-binary
+  # e psycopg-pool (comentados em requirements.txt)
   DB_USE_DB_GEVENTPOOL: 1  # Veja se => WORKER_CLASS: "gevent"
   DB_GEVENTPOOL_MAX_CONNS: "40"
   DB_GEVENTPOOL_REUSE_CONNS: "40"
