@@ -32,7 +32,7 @@ x-app-environment-default: &app-environment-default
   # https://serverfault.com/a/1077565
   BACKLOG: "10240"
   WORKER_CLASS: "gevent"
-  WORKERS: "2"
+  WORKERS: "1"
   WORKER_CONNECTIONS: "200"
   # Afeta somente se WORKER_CLASS="gthread"
   # Se usado com WORKER_CLASS="sync", "gthread" será usado no lugar.
@@ -50,6 +50,7 @@ x-app-environment-default: &app-environment-default
   # DB_PORT: 6432
   DB_HOST: "postgres"
   DB_PORT: 5432
+  NUM_INSERT_WORKERS: 24
 
   # Caso DB_USE_DB_GEVENTPOOL=0, instalar os pacotes psycopg, psycopg-binary
   # e psycopg-pool (comentados em requirements.txt)

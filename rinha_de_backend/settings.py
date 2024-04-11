@@ -133,6 +133,8 @@ DATABASES = {
     }
 }
 
+NUM_INSERT_WORKERS = int(os.getenv("NUM_INSERT_WORKERS", 2))
+
 CACHES = {
     "default": {
         # "BACKEND": "django.core.cache.backends.redis.RedisCache",

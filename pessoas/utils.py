@@ -5,15 +5,9 @@ import sys
 
 
 def get_body_as_json(request):
-    """
-    Adiciona o método request.json() ao objeto request
-    """
-    if not hasattr(request, "_json_cache"):
-        if request.META.get("CONTENT_TYPE") == "application/json":
-            request._json_cache = json.loads(request.read())
-        else:
-            request._json_cache = None
-    return request._json_cache
+    if request.META.get("CONTENT_TYPE") == "application/json":
+        return json.loads(request.read())
+    raise ValueError(f"Content-Type is {request.META.get('CONTENT_TYPE')}")
 
 
 _outfile = sys.__stderr__

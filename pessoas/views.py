@@ -14,11 +14,11 @@ from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
 
 from .models import Pessoa
-from .queue import insert_worker, insert_task
+from .queue import init_workers  # insert_worker, Queue, QueueCycle  # insert_task
 from .schemas import PessoaSchema
 
 
-gevent.spawn(insert_worker)
+queues_cycle = init_workers()
 
 
 def _pessoa_create(request: HttpRequest) -> HttpResponse:
@@ -34,7 +34,8 @@ def _pessoa_create(request: HttpRequest) -> HttpResponse:
         result = schema.model_dump()
         # pessoa = form.save()
         # insert_task.put(pessoa.to_dict(pk=True), block=True)
-        insert_task.put_nowait(result)
+        # insert_task.put_nowait(result)
+        queues_cycle.get().put_nowait(result)
         set_pessoa_dict_cache(schema.id, result)
         return JsonResponse(
             data={"message": "criado"},
