@@ -98,7 +98,7 @@ def _get_db_backend():
     if use_geventpool:
         return "django_db_geventpool.backends.postgresql_psycopg2"
     # Backport da versão de desenvolvimento 5.0+
-    return "rinha_de_backend.db.backends.postgresql"
+    return "django.db.backends.postgresql"
 
 def _get_db_options():
     use_geventpool = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
@@ -107,10 +107,7 @@ def _get_db_options():
             'MAX_CONNS': int(os.getenv("DB_GEVENTPOOL_MAX_CONNS", "23")),
             'REUSE_CONNS': int(os.getenv("DB_GEVENTPOOL_REUSE_CONNS", "23")),
         }
-    return {
-        # Backport da versão de desenvolvimento 5.0+
-        "pool": True,
-    }
+    return {}
 
 def _get_db_conn_max_age():
     use_geventpool = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
@@ -120,7 +117,7 @@ def _get_db_conn_max_age():
 
 DATABASES = {
     'default': {
-        'ENGINE': _get_db_backend(),
+        'ENGINE': "django_db_geventpool.backends.postgresql_psycopg2",
         'NAME': os.environ["DB_NAME"],
         'USER': os.environ["DB_USER"],
         'PASSWORD': os.environ["DB_PASSWORD"],

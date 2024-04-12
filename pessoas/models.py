@@ -40,14 +40,11 @@ class Pessoa(models.Model):
     # search_field = models.TextField("Campo de Busca", blank=True, null=False, default="")
     search_field = SearchVectorField("Campo de busca", null=False)
 
-    search_row = models.CharField("Search Row", max_length=2048, null=True, blank=True)
-
     class Meta:
         verbose_name = "Pessoa"
         verbose_name_plural = "Pessoas"
         indexes = (
             GinIndex(fields=["search_field"]),
-            GistIndex(name="pessoas_pes_search__1a433c_gist", fields=["search_row"], opclasses=["gist_trgm_ops"]),
         )
 
     def __str__(self):

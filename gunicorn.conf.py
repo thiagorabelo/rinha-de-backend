@@ -194,9 +194,9 @@ def post_fork(server, worker):
     worker_str = f"Worker {worker.pid}"
 
     def patch_psycopg():
-        from psycogreen.gevent import patch_psycopg as patch
         do_patch = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
         if do_patch:
+            from psycogreen.gevent import patch_psycopg as patch
             patch()
             print(f">>> {worker_str}: Psycopg patched!", file=output)
 
@@ -209,6 +209,7 @@ def post_fork(server, worker):
         print(f">>> {worker_str}: {server.cfg.worker_connections=}", file=output)
         print(f">>> {worker_str}: {server.cfg.threads=}", file=output)
         print(f">>> {worker_str}: {server.cfg.loglevel=}", file=output)
+        print(f">>> {worker_str}: {os.getenv('DB_USE_DB_GEVENTPOOL')=}")
         print(f">>> {worker_str}: {os.getenv('DB_GEVENTPOOL_MAX_CONNS')=}")
         print(f">>> {worker_str}: {os.getenv('DB_GEVENTPOOL_REUSE_CONNS')=}")
         print(f">>> {worker_str}: {os.getenv('NUM_INSERT_WORKERS')=}")
