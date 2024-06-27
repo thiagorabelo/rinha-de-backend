@@ -2,7 +2,7 @@
 
 Ainda em construção, mas garanto que está sendo feito na força do ódio e com muita preguiça.
 
-Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um dia eu termino
+Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um dia eu termino.
 
 ## Link para a especificação do desafio
 
@@ -20,6 +20,10 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://dev.to/stefanukena/scaling-django-postgres-with-pgbouncer-on-heroku-1lb5>
 - <https://docs.djangoproject.com/en/4.2/topics/db/optimization>
 - <https://www.enterprisedb.com/postgres-tutorials/why-you-should-use-connection-pooling-when-setting-maxconnections-postgres>
+- <https://forum.djangoproject.com/t/an-async-journey-with-django-4-2/21920>
+- <https://dev.to/skywind3000/performance-asyncio-vs-gevent-vs-native-epoll-bnl>
+- <https://www.gevent.org/loop_impls.html>
+- <https://klen.github.io/py-frameworks-bench/>
 
 ### Asyncio
 
@@ -42,6 +46,10 @@ Estou fazendo aos poucos, bem devagar, no meu pouco tempo livre. Quem sabe um di
 - <https://dba.stackexchange.com/a/299047>
 - <https://copyprogramming.com/howto/postgres-full-text-search-on-array-column-with-index>
 - <https://www.enterprisedb.com/postgres-tutorials/how-tune-postgresql-memory>
+- <https://dev.to/elmuerte/improving-postgresql-queries-4pc1>
+- <https://onesignal.com/blog/lessons-learned-from-5-years-of-scaling-postgresql/>
+- <https://devcenter.heroku.com/articles/postgresql-indexes>
+- <https://saadmk11.github.io/blog/posts/django-postgresql-database-connection-pooling-with-pgbouncer/>
 
 ### Gunicorn
 
