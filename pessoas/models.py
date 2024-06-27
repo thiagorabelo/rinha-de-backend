@@ -2,7 +2,6 @@ import json
 import operator
 import uuid
 
-from asgiref.sync import sync_to_async
 from functools import reduce
 
 from datetime import datetime
@@ -48,14 +47,11 @@ class Pessoa(models.Model):
     # search_field = models.TextField("Campo de Busca", blank=True, null=False, default="")
     search_field = SearchVectorField("Campo de busca", null=False)
 
-    search_row = models.CharField("Search Row", max_length=2048, null=True, blank=True)
-
     class Meta:
         verbose_name = "Pessoa"
         verbose_name_plural = "Pessoas"
         indexes = (
             GinIndex(fields=["search_field"]),
-            GistIndex(name="pessoas_pes_search__1a433c_gist", fields=["search_row"], opclasses=["gist_trgm_ops"]),
         )
 
     def __str__(self):
@@ -141,13 +137,5 @@ class Pessoa(models.Model):
         return cls.filter_as_dict(**kwargs).get()
 
     @classmethod
-    async def aget_as_dict(cls, **kwargs):
-        return await cls.filter_as_dict(**kwargs).aget()
-
-    @classmethod
     def from_json(cls, json_str):
         return cls.objects.create(**json.loads(json_str))
-
-    @classmethod
-    async def afrom_json(cls, json_str):
-        return await cls.objects.acreate(**json.loads(json_str))

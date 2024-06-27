@@ -93,24 +93,44 @@ WSGI_APPLICATION = 'rinha_de_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+def _get_db_backend():
+    use_geventpool = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
+    if use_geventpool:
+        return "django_db_geventpool.backends.postgresql_psycopg2"
+    # Backport da versão de desenvolvimento 5.0+
+    return "django.db.backends.postgresql"
+
+def _get_db_options():
+    use_geventpool = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
+    if use_geventpool:
+        return {
+            'MAX_CONNS': int(os.getenv("DB_GEVENTPOOL_MAX_CONNS", "23")),
+            'REUSE_CONNS': int(os.getenv("DB_GEVENTPOOL_REUSE_CONNS", "23")),
+        }
+    return {}
+
+def _get_db_conn_max_age():
+    use_geventpool = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
+    if use_geventpool:
+        return 0
+    return int(os.getenv("DB_CONN_MAX_AGE", 0))
+
 DATABASES = {
     'default': {
-        # Versão de desenvolvimento > 5
-        'ENGINE': 'rinha_de_backend.db.backends.postgresql',
-
+        'ENGINE': "django_db_geventpool.backends.postgresql_psycopg2",
         'NAME': os.environ["DB_NAME"],
         'USER': os.environ["DB_USER"],
         'PASSWORD': os.environ["DB_PASSWORD"],
         'HOST': os.environ["DB_HOST"],
         'PORT': os.getenv("DB_PORT", '5432'),
-
-        # Versão de desenvolvimento > 5
-        # https://docs.djangoproject.com/en/dev/ref/databases/#connection-pool
-        "OPTIONS": {
-            "pool": True,
-        },
+        'CONN_MAX_AGE': _get_db_conn_max_age(),  # Para uso com django_db_geventpool, deve ser 0
+        'OPTIONS': {
+            "application_name": f"Rinha de Backend [{MY_HOST_NAME}/{os.getpid()}]",
+        } | _get_db_options()
     }
 }
+
+NUM_INSERT_WORKERS = int(os.getenv("NUM_INSERT_WORKERS", 2))
 
 CACHES = {
     "default": {

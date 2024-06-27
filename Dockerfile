@@ -15,7 +15,7 @@ FROM python:${PYTHON_TAG}
 RUN addgroup galo && adduser -S -G galo -g "App Runner" galo \
     && mkdir -p /app \
     && chown galo:galo -R /app \
-    && apk add build-base linux-headers
+    && apk add build-base linux-headers libffi libffi-dev
 
 COPY requirements.txt ./
 
@@ -28,4 +28,4 @@ WORKDIR /app
 
 USER galo
 
-CMD /app/start_uvicorn.sh
+CMD /app/start_gunicorn.sh

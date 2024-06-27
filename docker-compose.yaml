@@ -24,10 +24,16 @@ x-rinha-de-backend-default: &rinha-de-backend-default
 
 
 x-app-environment-default: &app-environment-default
-    # https://serverfault.com/a/1077565
-  BACKLOG: "10240"  # TODO: Passar esses parâmetros para o uvicorn
-  WORKERS: "2"
-  WORKER_CONNECTIONS: "4096"
+  # GEVENT_LOOP: "libev-cext"
+  # GEVENT_LOOP: "libev-cffi"
+  # GEVENT_LOOP: "libuv-cffi"
+  # GEVENT_LOOP: "libuv"
+
+  # https://serverfault.com/a/1077565
+  BACKLOG: "10240"
+  WORKER_CLASS: "gevent"
+  WORKERS: "1"
+  WORKER_CONNECTIONS: "200"
   # Afeta somente se WORKER_CLASS="gthread"
   # Se usado com WORKER_CLASS="sync", "gthread" será usado no lugar.
   THREADS: "0"  # N Workers * N Threads = N*N Total Workers
@@ -44,16 +50,23 @@ x-app-environment-default: &app-environment-default
   # DB_PORT: 6432
   DB_HOST: "postgres"
   DB_PORT: 5432
-  DB_CONN_MAX_AGE: 100
+  NUM_INSERT_WORKERS: 24
+
+  # Caso DB_USE_DB_GEVENTPOOL=0, instalar os pacotes psycopg, psycopg-binary
+  # e psycopg-pool (comentados em requirements.txt)
+  DB_USE_DB_GEVENTPOOL: 1  # Veja se => WORKER_CLASS: "gevent"
+  DB_GEVENTPOOL_MAX_CONNS: "40"
+  DB_GEVENTPOOL_REUSE_CONNS: "40"
+  DB_CONN_MAX_AGE: 0  # DB_USE_DB_GEVENTPOOL=1 => DB_CONN_MAX_AGE=0
 
   CACHE_LOCATION: "redis://redis:6379/0"
 
   CPROFILE_MIDDLEWARE: "0"
 
 
-services:  # 1.5 CPUs e 3072MB RAM
+services:  # 1.5 CPUs e 3.0 GB RAM
 
-  nginx:  # 320MB / 0.15
+  nginx:  # 512MB / 0.15
     image: nginx:${NGINX_TAG}
     hostname: nginx
     restart: always
@@ -70,7 +83,7 @@ services:  # 1.5 CPUs e 3072MB RAM
     deploy:
       resources:
         limits:
-          memory: "320MB"
+          memory: "512MB"
           cpus: "0.15"
 
   app1:  # 512MB / 0.4
@@ -88,7 +101,7 @@ services:  # 1.5 CPUs e 3072MB RAM
       <<: *app-environment-default
       ALLOWED_HOSTS: "app2,localhost,127.0.0.1,0.0.0.0"
 
-  redis:  # 320MB / 0.1
+  redis:  # 512MB / 0.1
     image: redis:7.2.4-alpine
     hostname: redis
     command: redis-server --save "" --appendonly no --maxclients 20000
@@ -125,7 +138,7 @@ services:  # 1.5 CPUs e 3072MB RAM
   #         memory: 384MB
   #         cpus: "0.25"
 
-  postgres:  # 1408MB / 0.45
+  postgres:  # 1024MB / 0.45
     # Tive que fazer build da própia imagem para poder
     # adicionar a extensão "system_stats" no postgres
     # com finalidade de objter estatísticas no pgAdmin4
@@ -155,8 +168,7 @@ services:  # 1.5 CPUs e 3072MB RAM
     # effective_cache_size  50% RAM                      Estimates memory available for disk
     #                                                    caching by the OS and within the
     #                                                    database itself
-    # command: postgres -c log_min_messages=fatal -c max_connections=500 -c shared_buffers="384MB" -c work_mem="5MB" -c maintenance_work_mem="48MB" -c effective_cache_size="500MB" -c superuser_reserved_connections=3
-    command: postgres -c log_min_messages=fatal -c max_connections=500 -c shared_buffers="512MB" -c work_mem="5MB" -c maintenance_work_mem="70MB" -c effective_cache_size="704MB" -c superuser_reserved_connections=3
+    command: postgres -c log_min_messages=fatal -c max_connections=400 -c shared_buffers="384MB" -c work_mem="5MB" -c maintenance_work_mem="48MB" -c effective_cache_size="500MB"
     ports:
       - "5431:5432"
     healthcheck:
@@ -168,5 +180,5 @@ services:  # 1.5 CPUs e 3072MB RAM
     deploy:
       resources:
         limits:
-          memory: "1408MB"
+          memory: "1024MB"
           cpus: "0.45"

@@ -1,4 +1,3 @@
-from asgiref.sync import sync_to_async
 from django import forms
 from django.forms import ValidationError
 
@@ -30,6 +29,3 @@ class PessoaForm(forms.ModelForm):
     def clean(self):
         self._validate_unique = False
         return self.cleaned_data
-
-    async def asave(self, commit=True):
-        return await sync_to_async(super().save)(commit=commit)

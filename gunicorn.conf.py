@@ -1,5 +1,6 @@
 # Sample Gunicorn configuration file.
 
+import sys
 import os
 
 #
@@ -189,19 +190,35 @@ proc_name = None
 #
 
 def post_fork(server, worker):
-    import sys
-
-    output = sys.__stderr__
+    output = sys.__stdout__
     worker_str = f"Worker {worker.pid}"
 
-    print(f">>> {worker_str}: {server.cfg.backlog=}", file=output)
-    print(f">>> {worker_str}: {server.cfg.worker_class=}", file=output)
-    print(f">>> {worker_str}: {server.cfg.workers=}", file=output)
-    print(f">>> {worker_str}: {server.cfg.worker_connections=}", file=output)
-    print(f">>> {worker_str}: {server.cfg.threads=}", file=output)
-    print(f">>> {worker_str}: {server.cfg.loglevel=}", file=output)
+    def patch_psycopg():
+        do_patch = bool(int(os.getenv("DB_USE_DB_GEVENTPOOL", "0")))
+        if do_patch:
+            from psycogreen.gevent import patch_psycopg as patch
+            patch()
+            print(f">>> {worker_str}: Psycopg patched!", file=output)
+
+    def print_some_info():
+        # print(f">>> {worker.__module__}", file=output)
+        # print(f">>> {server.__module__}", file=output)
+        print(f">>> {worker_str}: {server.cfg.backlog=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.worker_class=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.workers=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.worker_connections=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.threads=}", file=output)
+        print(f">>> {worker_str}: {server.cfg.loglevel=}", file=output)
+        print(f">>> {worker_str}: {os.getenv('DB_USE_DB_GEVENTPOOL')=}")
+        print(f">>> {worker_str}: {os.getenv('DB_GEVENTPOOL_MAX_CONNS')=}")
+        print(f">>> {worker_str}: {os.getenv('DB_GEVENTPOOL_REUSE_CONNS')=}")
+        print(f">>> {worker_str}: {os.getenv('NUM_INSERT_WORKERS')=}")
 
     server.log.info("Worker spawned (pid: %s)", worker.pid)
+
+    patch_psycopg()
+    print_some_info()
+    output.flush()
 
 def pre_fork(server, worker):
     pass

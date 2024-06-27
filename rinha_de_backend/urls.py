@@ -24,6 +24,7 @@ urlpatterns = [
     path("pessoas", views.pessoa_create_or_list, name="pessoa_create_or_list"),
     path("pessoas/<uuid:pk>", views.pessoa_get, name="pessoa_get"),
     path("contagem-pessoas", views.contagem_pessoas, name="contagem-pessoas"),
+    path("gevent-loop", views.gevent_loop, name="gevent-loop"),
 
     # path('admin/', admin.site.urls),
 ]

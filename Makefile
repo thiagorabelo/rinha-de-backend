@@ -1,6 +1,8 @@
 
 build: build-app
 
+erase: clean down
+
 clean: clean-pg clean-redis
 
 up:
@@ -27,9 +29,6 @@ psql:
 
 shell:
 	docker compose exec app1 ./manage.py shell
-
-sh:
-	docker compose exec app1 sh
 
 # psql:
 # 	docker compose exec postgres psql -U galo rinha_de_backend

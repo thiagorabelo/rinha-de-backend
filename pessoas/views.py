@@ -1,59 +1,62 @@
-import codecs
-import json
+import gevent
+import logging
 import uuid
 
 from django.conf import settings
-from django.http import JsonResponse
-from django.db import IntegrityError
 from django.http import HttpResponse, HttpRequest
+from pydantic import ValidationError
 
-from .forms import PessoaForm
-from .http import JsonResponseBadRequest, JsonResponseNotFound, \
-                  JsonResponseUnprocessableEntity
+from .http import JsonResponse, JsonResponseUnprocessableEntity, \
+                  JsonResponseBadRequest, JsonResponseNotFound
 from .utils import get_body_as_json
 from .models import Pessoa
 from .cache import get_pessoa_dict_by_cache_or_db, set_pessoa_dict_cache, \
                    has_pessoa_apelido_cached
 
+from .models import Pessoa
+from .queue import init_workers  # insert_worker, Queue, QueueCycle  # insert_task
+from .schemas import PessoaSchema
 
-async def _pessoa_create(request: HttpRequest) -> HttpResponse:
+
+queues_cycle = init_workers()
+
+
+def _pessoa_create(request: HttpRequest) -> HttpResponse:
     try:
-        form = PessoaForm(data=get_body_as_json(request))
-        if form.is_valid():
-            pessoa = form.instance
+        schema = PessoaSchema(**get_body_as_json(request))
 
-            if await has_pessoa_apelido_cached(pessoa):
-                return JsonResponseUnprocessableEntity(
-                    data={"message": "O apelido já existe"},
-                    headers={"My-Host-Name": settings.MY_HOST_NAME}
-                )
+        if has_pessoa_apelido_cached(schema.apelido):
+            return JsonResponseUnprocessableEntity(
+                data={"message": "O apelido já existe"},
+                headers={"My-Host-Name": settings.MY_HOST_NAME}
+            )
 
-            try:
-                pessoa = await form.asave()
-                await set_pessoa_dict_cache(pessoa.pk, pessoa.to_dict())
-                return JsonResponse(
-                    data={"message": "criado"},
-                    headers={"Location": pessoa.get_absolute_url(),
-                                "My-Host-Name": settings.MY_HOST_NAME},
-                    status=201
-                )
-            except IntegrityError:
-                return JsonResponseUnprocessableEntity(
-                    data={"message": "unique violation"},
-                    headers={"My-Host-Name": settings.MY_HOST_NAME}
-                )
+        result = schema.model_dump()
+        # pessoa = form.save()
+        # insert_task.put(pessoa.to_dict(pk=True), block=True)
+        # insert_task.put_nowait(result)
+        queues_cycle.get().put_nowait(result)
+        set_pessoa_dict_cache(schema.id, result)
+        return JsonResponse(
+            data={"message": "criado"},
+            headers={"Location": Pessoa.get_absolute_url(schema),  # Gambiarra, mas funciona!
+                     "My-Host-Name": settings.MY_HOST_NAME},
+            status=201
+        )
+    except ValidationError as ex:
         return JsonResponseUnprocessableEntity(
-            data=form.errors,
+            data=ex.json(),
             headers={"My-Host-Name": settings.MY_HOST_NAME}
         )
-    except AttributeError as ex:
+    except Exception as ex:
+        logging.error(ex)
         return JsonResponseBadRequest(
             data={"message": str(ex)},
             headers={"My-Host-Name": settings.MY_HOST_NAME}
         )
 
 
-async def _pessoa_list(request: HttpRequest) -> HttpResponse:
+def _pessoa_list(request: HttpRequest) -> HttpResponse:
     term = request.GET.get("t")
     if not term:
         return JsonResponseBadRequest(
@@ -61,28 +64,27 @@ async def _pessoa_list(request: HttpRequest) -> HttpResponse:
         )
 
     terms = term.split()
-    ait = Pessoa.search_terms2(*terms, as_dict=True)[:50].aiterator()
+    qs = Pessoa.search_terms(*terms, as_dict=True)[:50]
     return JsonResponse(
-        data=[p async for p in ait],
+        data=list(qs),
         headers={"My-Host-Name": settings.MY_HOST_NAME},
-        safe=False
     )
 
 
-async def pessoa_create_or_list(request: HttpRequest) -> HttpResponse:
+def pessoa_create_or_list(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
-        return await _pessoa_create(request)
+        return _pessoa_create(request)
     elif request.method == "GET":
-        return await _pessoa_list(request)
+        return _pessoa_list(request)
     return JsonResponse(
         content={"message": "Not Allowed"},
         status=405,
     )
 
 
-async def pessoa_get(request: HttpRequest, pk: uuid.UUID = None) -> HttpResponse:
+def pessoa_get(request: HttpRequest, pk: uuid.UUID = None) -> HttpResponse:
     try:
-        pessoa_dict = await get_pessoa_dict_by_cache_or_db(pk)
+        pessoa_dict = get_pessoa_dict_by_cache_or_db(pk)
         return JsonResponse(
             data=pessoa_dict,
             headers={"My-Host-Name": settings.MY_HOST_NAME}
@@ -91,11 +93,23 @@ async def pessoa_get(request: HttpRequest, pk: uuid.UUID = None) -> HttpResponse
         return JsonResponseNotFound(data={"message": "Pessoa não encontrada"})
 
 
-async def contagem_pessoas(request):
-    total = await Pessoa.objects.all().acount()
+def contagem_pessoas(request):
+    total = Pessoa.objects.all().count()
     return HttpResponse(
         content=f"{total}".encode("utf-8"),
         content_type="application/json",
+        headers={"My-Host-Name": settings.MY_HOST_NAME},
+        status=200
+    )
+
+
+def gevent_loop(request):
+    import gevent
+    loop = gevent.config.loop
+
+    return HttpResponse(
+        content=f"{loop.__module__}.{loop.__name__}".encode("utf-8"),
+        content_type="text/plain",
         headers={"My-Host-Name": settings.MY_HOST_NAME},
         status=200
     )
