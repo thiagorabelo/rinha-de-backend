@@ -13,6 +13,7 @@ gevent==24.2.1
 greenlet==3.0.3
 gunicorn==21.2.0
 hiredis==2.3.2
+httptools==0.6.1
 idna==3.6
 ipython==8.22.2
 jedi==0.19.1
